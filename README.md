@@ -1,0 +1,20 @@
+build opencv 
+
+```
+cmake $OPENCV_SOURCE \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCPU_BASELINE=AVX2 \
+    -DCPU_DISPATCH=AVX2,AVX512 \
+    -DENABLE_AVX2=ON \
+    -DENABLE_FMA3=ON \
+    -DWITH_OPENMP=ON \
+    -DWITH_TBB=ON \
+    -DBUILD_EXAMPLES=OFF \
+    -DBUILD_TESTS=OFF \
+    -DBUILD_PERF_TESTS=OFF \
+    -DBUILD_DOCS=OFF \
+    -G Ninja \
+    ..
+
+```
