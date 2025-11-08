@@ -3,7 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "Sobel.hpp"
+#include "sobel.hpp"
 
 static int failures = 0;
 
