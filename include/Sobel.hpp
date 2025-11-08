@@ -1,5 +1,5 @@
-#ifndef KERNEL_HPP
-#define KERNEL_HPP
+#ifndef SOBEL_HPP
+#define SOBEL_HPP
 
 #include <cstdint>
 
