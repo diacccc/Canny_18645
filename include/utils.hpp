@@ -7,6 +7,23 @@
 using namespace std;
 using namespace chrono;
 
+
+#define REPEAT10(stmt) do { \
+  stmt; stmt; stmt; stmt; stmt; \
+  stmt; stmt; stmt; stmt; stmt; \
+} while(0)
+
+#define REPEAT100(stmt) do { \
+  REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); \
+  REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); REPEAT10(stmt); \
+} while(0)
+
+#define REPEAT1000(stmt) do { \
+  REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); \
+  REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); REPEAT100(stmt); \
+} while(0)
+
+
 struct PerformanceResult {
     int width;
     int height;

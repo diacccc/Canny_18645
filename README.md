@@ -36,3 +36,10 @@ sudo cmake --install .
 
 
 ```
+
+
+```
+cmake ..
+cmake --build . --config Release
+ctest -R test_sobel --output-on-failure
+```
