@@ -7,7 +7,7 @@
 #define MM 5
 #define NN 18
 
-#define NUM_ITER 500000000
+#define NUM_ITER 50000000
 
 //timing routine for reading the time stamp counter
 static __inline__ unsigned long long rdtsc(void) {
