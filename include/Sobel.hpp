@@ -2,6 +2,7 @@
 #define SOBEL_HPP
 
 #include <cstdint>
+#include <immintrin.h>
 
 #define SOBEL_3x3(gx, gy, src, step, idx) \
     gx[idx] = (int16_t) src[idx - step - 1] + 2*(int16_t) src[idx - step] + (int16_t) src[idx - step + 1] - \
@@ -12,10 +13,6 @@
 #endif
 
 // Question: Is tiling horizontal or vertical?
-
-#include <stdint.h>
-#include <stdio.h>
-#include <immintrin.h>
 
 void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* Gx, uint16_t* Gy) {
 	__m256i vGx1, vGx2, vGx3;
