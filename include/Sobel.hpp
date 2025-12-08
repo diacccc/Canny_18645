@@ -11,6 +11,8 @@
 
 #endif
 
+// Question: Is tiling horizontal or vertical?
+
 #include <stdint.h>
 #include <stdio.h>
 #include <immintrin.h>
@@ -20,15 +22,15 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
 	__m256i vGy1, vGy2, vGy3;
 	__m256i vA0, vA1, vA2, vA3, vA4;
 	__m256i vB0, vB1, vB2, vB3, vB4;
-	for (int i = 0; i < MM; i += TILE_ROWS) {
-		for (int j = 0; j < NN; j += TILE_COLS) {
+	for (int i = 0; i < M; i += TILE_ROWS) {
+		for (int j = 0; j < N; j += TILE_COLS) {
 			for (int x = 0; x < TILE_ROWS - 4; x += 3) {
 				for (int y = 0; y < TILE_COLS; y += 16) {
-    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y + 2]));
-    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y + 2]));
-    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y + 2]));
-    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y + 2]));
-    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y + 2]));
+    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 2]));
+    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 2]));
+    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 2]));
+    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y + 2]));
+    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y + 2]));
     
     				// vGx1 = _mm256_add_epi16(vB1, vB1);
     				// vGx2 = _mm256_add_epi16(vB2, vB2);
@@ -82,11 +84,11 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB4] "x"(vB4)
     				);
     
-    				vA0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y]));
-    				vA1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y]));
-    				vA2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y]));
-    				vA3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y]));
-    				vA4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y]));
+    				vA0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y]));
+    				vA1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y]));
+    				vA2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y]));
+    				vA3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y]));
+    				vA4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y]));
     
     				// vGx1 = _mm256_sub_epi16(vGx1, vA0);
     				// vGx2 = _mm256_sub_epi16(vGx2, vA1);
@@ -158,15 +160,15 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB4] "x"(vB4)
     				);
 					    
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGx1);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGx2);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGx3);
-    
-    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y + 1]));
-    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y + 1]));
-    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y + 1]));
-    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y + 1]));
-    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y + 1]));
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGx1);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGx2);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGx3);
+
+    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]));
+    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]));
+    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]));
+    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y + 1]));
+    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y + 1]));
     
     				// vGy1 = _mm256_sub_epi16(vGy1, vB0);
     				// vGy2 = _mm256_sub_epi16(vGy2, vB1);
@@ -216,9 +218,9 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB4] "x"(vB4)
     				);
     
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGy1);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGy2);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGy3);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGy1);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGy2);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGy3);
     			}
 			}
 		}
