@@ -15,170 +15,236 @@
 #include <stdio.h>
 #include <immintrin.h>
 
-void Sobel_5x1(uint16_t* Img, int M, int N, int row, int col, int16_t* Gx, int16_t* Gy
-        // uint16_t* Mag
-) {
-    __m256i a0, a1, a2, a3, a4, a5;
-    __m256i gx1, gx2, gx3, gx4, gx5;
-    __m256i gy1, gy2, gy3, gy4, gy5;
-
-    // L0 - L5
-    a0 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * row + col));
-    a1 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 1) + col));
-    a2 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 2) + col));
-    a3 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 3) + col));
-    a4 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 4) + col));
-    a5 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 5) + col));
-
-    gx1 = _mm256_sub_epi16(gx1, a0);
-    gy1 = _mm256_sub_epi16(gy1, a0);
-    gx2 = _mm256_sub_epi16(gx2, a1);
-    gy2 = _mm256_sub_epi16(gy2, a1);
-    gx3 = _mm256_sub_epi16(gx3, a2);
-    gy3 = _mm256_sub_epi16(gy3, a2);
-    gx4 = _mm256_sub_epi16(gx4, a3);
-    gy4 = _mm256_sub_epi16(gy4, a3);
-    gx5 = _mm256_sub_epi16(gx5, a4);
-    gy5 = _mm256_sub_epi16(gy5, a4);
-
-    gx1 = _mm256_sub_epi16(gx1, a1);
-    gx2 = _mm256_sub_epi16(gx2, a2);
-    gx3 = _mm256_sub_epi16(gx3, a3);
-    gx4 = _mm256_sub_epi16(gx4, a4);
-    gx5 = _mm256_sub_epi16(gx5, a5);
-
-    gx1 = _mm256_sub_epi16(gx1, a1);
-    gx2 = _mm256_sub_epi16(gx2, a2);
-    gx3 = _mm256_sub_epi16(gx3, a3);
-    gx4 = _mm256_sub_epi16(gx4, a4);
-    gx5 = _mm256_sub_epi16(gx5, a5);
-
-    // L1 - L6
-    a0 = _mm256_load_si256(reinterpret_cast<__m256i*>(Img + N * (row + 6) + col));
-
-    gx1 = _mm256_sub_epi16(gx1, a2);
-    gy1 = _mm256_add_epi16(gy1, a2);
-    gx2 = _mm256_sub_epi16(gx2, a3);
-    gy2 = _mm256_add_epi16(gy2, a3);
-    gx3 = _mm256_sub_epi16(gx3, a4);
-    gy3 = _mm256_add_epi16(gy3, a4);
-    gx4 = _mm256_sub_epi16(gx4, a5);
-    gy4 = _mm256_add_epi16(gy4, a5);
-    gx5 = _mm256_sub_epi16(gx5, a0);
-    gy5 = _mm256_add_epi16(gy5, a0);
-
-    // R0 - R5
-    a0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * row + (col + 2)));
-    a1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 1) + (col + 2)));
-    a2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 2) + (col + 2)));
-    a3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 3) + (col + 2)));
-    a4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 4) + (col + 2)));
-    a5 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 5) + (col + 2)));
-
-    gx1 = _mm256_add_epi16(gx1, a0);
-    gy1 = _mm256_sub_epi16(gy1, a0);
-    gx2 = _mm256_add_epi16(gx2, a1);
-    gy2 = _mm256_sub_epi16(gy2, a1);
-    gx3 = _mm256_add_epi16(gx3, a2);
-    gy3 = _mm256_sub_epi16(gy3, a2);
-    gx4 = _mm256_add_epi16(gx4, a3);
-    gy4 = _mm256_sub_epi16(gy4, a3);
-    gx5 = _mm256_add_epi16(gx5, a4);
-    gy5 = _mm256_sub_epi16(gy5, a4);
-
-    gx1 = _mm256_add_epi16(gx1, a1);
-    gx2 = _mm256_add_epi16(gx2, a2);
-    gx3 = _mm256_add_epi16(gx3, a3);
-    gx4 = _mm256_add_epi16(gx4, a4);
-    gx5 = _mm256_add_epi16(gx5, a5);
-
-    gx1 = _mm256_add_epi16(gx1, a1);
-    gx2 = _mm256_add_epi16(gx2, a2);
-    gx3 = _mm256_add_epi16(gx3, a3);
-    gx4 = _mm256_add_epi16(gx4, a4);
-    gx5 = _mm256_add_epi16(gx5, a5);
-
-    // R1 - R6
-    a0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 6) + (col + 2)));
-
-    gx1 = _mm256_add_epi16(gx1, a2);
-    gy1 = _mm256_add_epi16(gy1, a2);
-    gx2 = _mm256_add_epi16(gx2, a3);
-    gy2 = _mm256_add_epi16(gy2, a3);
-    gx3 = _mm256_add_epi16(gx3, a4);
-    gy3 = _mm256_add_epi16(gy3, a4);
-    gx4 = _mm256_add_epi16(gx4, a5);
-    gy4 = _mm256_add_epi16(gy4, a5);
-    gx5 = _mm256_add_epi16(gx5, a0);
-    gy5 = _mm256_add_epi16(gy5, a0);
-
-    // C0 - C5
-    a0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * row + (col + 1)));
-    a1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 1) + (col + 1)));
-    a2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 2) + (col + 1)));
-    a3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 3) + (col + 1)));
-    a4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 4) + (col + 1)));
-    a5 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 5) + (col + 1)));
-
-    gy1 = _mm256_sub_epi16(gy1, a0);
-    gy2 = _mm256_sub_epi16(gy2, a1);
-    gy3 = _mm256_sub_epi16(gy3, a2);
-    gy4 = _mm256_sub_epi16(gy4, a3);
-    gy5 = _mm256_sub_epi16(gy5, a4);
-
-    gy1 = _mm256_sub_epi16(gy1, a0);
-    gy2 = _mm256_sub_epi16(gy2, a1);
-    gy3 = _mm256_sub_epi16(gy3, a2);
-    gy4 = _mm256_sub_epi16(gy4, a3);
-    gy5 = _mm256_sub_epi16(gy5, a4);
-
-    // C1 - C6
-    a0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(Img + N * (row + 6) + (col + 1)));
-
-    gy1 = _mm256_sub_epi16(gy1, a2);
-    gy2 = _mm256_sub_epi16(gy2, a3);
-    gy3 = _mm256_sub_epi16(gy3, a4);
-    gy4 = _mm256_sub_epi16(gy4, a5);
-    gy5 = _mm256_sub_epi16(gy5, a0);
-
-    gy1 = _mm256_sub_epi16(gy1, a2);
-    gy2 = _mm256_sub_epi16(gy2, a3);
-    gy3 = _mm256_sub_epi16(gy3, a4);
-    gy4 = _mm256_sub_epi16(gy4, a5);
-    gy5 = _mm256_sub_epi16(gy5, a0);
-
-    // Store
-
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gx + N * row + col), gx1);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gx + N * (row + 1) + col), gx2);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gx + N * (row + 2) + col), gx3);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gx + N * (row + 3) + col), gx4);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gx + N * (row + 4) + col), gx5);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gy + N * row + col), gy1);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gy + N * (row + 1) + col), gy2);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gy + N * (row + 2) + col), gy3);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gy + N * (row + 3) + col), gy4);
-    _mm256_storeu_si256(reinterpret_cast<__m256i*>(Gy + N * (row + 4) + col), gy5);
-
-
-    // Magnitude
-    // a0 = _mm256_abs_epi16(gx1);
-    // a1 = _mm256_abs_epi16(gx2);
-    // a2 = _mm256_abs_epi16(gx3);
-    // a3 = _mm256_abs_epi16(gy1);
-    // a4 = _mm256_abs_epi16(gy2);
-    // a5 = _mm256_abs_epi16(gy3);
-
-    // a0 = _mm256_add_epi16(a0, a3);
-    // a1 = _mm256_add_epi16(a1, a4);
-    // a2 = _mm256_add_epi16(a2, a5);
-
-    // a3 = _mm256_abs_epi16(gx4);
-    // a4 = _mm256_abs_epi16(gx5);
-    // a5 = _mm256_abs_epi16(gy4);
-
-    // a3 = _mm256_add_epi16(a3, a5);
-
-    // a5 = _mm256_abs_epi16(gy5);
-    // a4 = _mm256_add_epi16(a4, a5);
+void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* Gx, uint16_t* Gy) {
+	__m256i vGx1, vGx2, vGx3;
+	__m256i vGy1, vGy2, vGy3;
+	__m256i vA0, vA1, vA2, vA3, vA4;
+	__m256i vB0, vB1, vB2, vB3, vB4;
+	for (int i = 0; i < MM; i += TILE_ROWS) {
+		for (int j = 0; j < NN; j += TILE_COLS) {
+			for (int x = 0; x < TILE_ROWS - 4; x += 3) {
+				for (int y = 0; y < TILE_COLS; y += 16) {
+    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y + 2]));
+    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y + 2]));
+    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y + 2]));
+    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y + 2]));
+    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y + 2]));
+    
+    				// vGx1 = _mm256_add_epi16(vB1, vB1);
+    				// vGx2 = _mm256_add_epi16(vB2, vB2);
+    				// vGx3 = _mm256_add_epi16(vB3, vB3);
+    
+    				// vGy1 = _mm256_sub_epi16(vB2, vB0);
+    				// vGy2 = _mm256_sub_epi16(vB3, vB1);
+    				// vGy3 = _mm256_sub_epi16(vB4, vB2);
+    
+    				// vGx1 = _mm256_add_epi16(vGx1, vB0);
+    				// vGx2 = _mm256_add_epi16(vGx2, vB1);
+    				// vGx3 = _mm256_add_epi16(vGx3, vB2);
+    				// vGx1 = _mm256_add_epi16(vGx1, vB2);
+    				// vGx2 = _mm256_add_epi16(vGx2, vB3);
+    				// vGx3 = _mm256_add_epi16(vGx3, vB4);
+    
+    				__asm__ volatile (
+    					"vpaddw %[vB1], %[vB1], %[vGx1]\n\t"
+    					"vpaddw %[vB2], %[vB2], %[vGx2]\n\t"
+    					"vpaddw %[vB3], %[vB3], %[vGx3]\n\t"
+    
+    					"vpsubw %[vB0], %[vB2], %[vGy1]\n\t"
+    					"vpsubw %[vB1], %[vB3], %[vGy2]\n\t"
+    					"vpsubw %[vB2], %[vB4], %[vGy3]\n\t"
+    
+    					"vpaddw %[vB0], %[vGx1], %[vGx1]\n\t"
+    					"vpaddw %[vB1], %[vGx2], %[vGx2]\n\t"
+    					"vpaddw %[vB2], %[vGx3], %[vGx3]\n\t"
+    					"vpaddw %[vB2], %[vGx1], %[vGx1]\n\t"
+    					"vpaddw %[vB3], %[vGx2], %[vGx2]\n\t"
+    					"vpaddw %[vB4], %[vGx3], %[vGx3]\n\t"
+    					:
+    					    [vGx1] "+x"(vGx1),
+    					    [vGx2] "+x"(vGx2),
+    					    [vGx3] "+x"(vGx3),
+    					    [vGy1] "+x"(vGy1),
+    					    [vGy2] "+x"(vGy2),
+    					    [vGy3] "+x"(vGy3)
+    
+    					:
+    					    [vA0] "x"(vA0),
+    					    [vA1] "x"(vA1),
+    					    [vA2] "x"(vA2),
+    					    [vA3] "x"(vA3),
+    					    [vA4] "x"(vA4),
+    
+    					    [vB0] "x"(vB0),
+    					    [vB1] "x"(vB1),
+    					    [vB2] "x"(vB2),
+    					    [vB3] "x"(vB3),
+    					    [vB4] "x"(vB4)
+    				);
+    
+    				vA0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y]));
+    				vA1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y]));
+    				vA2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y]));
+    				vA3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y]));
+    				vA4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y]));
+    
+    				// vGx1 = _mm256_sub_epi16(vGx1, vA0);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vA1);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vA2);
+    
+    				// vGy1 = _mm256_sub_epi16(vGy1, vA0);
+    				// vGy2 = _mm256_sub_epi16(vGy2, vA1);
+    				// vGy3 = _mm256_sub_epi16(vGy3, vA2);
+    
+    				// vGx1 = _mm256_sub_epi16(vGx1, vA2);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vA3);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vA4);
+    
+    				// vGy1 = _mm256_add_epi16(vGy1, vA2);
+    				// vGy2 = _mm256_add_epi16(vGy2, vA3);
+    				// vGy3 = _mm256_add_epi16(vGy3, vA4);
+    
+    				// vGx1 = _mm256_sub_epi16(vGx1, vA1);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vA2);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vA3);
+    				// vGx1 = _mm256_sub_epi16(vGx1, vA1);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vA2);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vA3);
+    
+    				__asm__ volatile (
+    					"vpsubw %[vA0], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vA1], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vA2], %[vGx3], %[vGx3]\n\t"
+    
+    					"vpsubw %[vA0], %[vGy1], %[vGy1]\n\t"
+    					"vpsubw %[vA1], %[vGy2], %[vGy2]\n\t"
+    					"vpsubw %[vA2], %[vGy3], %[vGy3]\n\t"
+    
+    					"vpsubw %[vA2], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vA3], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vA4], %[vGx3], %[vGx3]\n\t"
+    
+    
+    					"vpaddw %[vA2], %[vGy1], %[vGy1]\n\t"
+    					"vpaddw %[vA3], %[vGy2], %[vGy2]\n\t"
+    					"vpaddw %[vA4], %[vGy3], %[vGy3]\n\t"
+    
+    
+    					"vpsubw %[vA1], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vA2], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vA3], %[vGx3], %[vGx3]\n\t"
+    					"vpsubw %[vA1], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vA2], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vA3], %[vGx3], %[vGx3]\n\t"
+    					:
+    					    [vGx1] "+x"(vGx1),
+    					    [vGx2] "+x"(vGx2),
+    					    [vGx3] "+x"(vGx3),
+    					    [vGy1] "+x"(vGy1),
+    					    [vGy2] "+x"(vGy2),
+    					    [vGy3] "+x"(vGy3)
+    
+    					:
+    					    [vA0] "x"(vA0),
+    					    [vA1] "x"(vA1),
+    					    [vA2] "x"(vA2),
+    					    [vA3] "x"(vA3),
+    					    [vA4] "x"(vA4),
+    
+    					    [vB0] "x"(vB0),
+    					    [vB1] "x"(vB1),
+    					    [vB2] "x"(vB2),
+    					    [vB3] "x"(vB3),
+    					    [vB4] "x"(vB4)
+    				);
+    
+    				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y + 1]));
+    				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y + 1]));
+    				vB2 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 2) * TILE_COLS + y + 1]));
+    				vB3 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 3) * TILE_COLS + y + 1]));
+    				vB4 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 4) * TILE_COLS + y + 1]));
+    
+    				// vGy1 = _mm256_sub_epi16(vGy1, vB0);
+    				// vGy2 = _mm256_sub_epi16(vGy2, vB1);
+    				// vGy3 = _mm256_sub_epi16(vGy3, vB2);
+    				// vGy1 = _mm256_add_epi16(vGy1, vB2);
+    				// vGy2 = _mm256_add_epi16(vGy2, vB3);
+    				// vGy3 = _mm256_add_epi16(vGy3, vB4);
+    
+    				__asm__ volatile (
+    					"vpsubw %[vB0], %[vGy1], %[vGy1]\n\t"
+    					"vpsubw %[vB1], %[vGy2], %[vGy2]\n\t"
+    					"vpsubw %[vB2], %[vGy3], %[vGy3]\n\t"
+    					"vpaddw %[vB2], %[vGy1], %[vGy1]\n\t"
+    					"vpaddw %[vB3], %[vGy2], %[vGy2]\n\t"
+    					"vpaddw %[vB4], %[vGy3], %[vGy3]\n\t"
+    					:
+    					    [vGx1] "+x"(vGx1),
+    					    [vGx2] "+x"(vGx2),
+    					    [vGx3] "+x"(vGx3),
+    					    [vGy1] "+x"(vGy1),
+    					    [vGy2] "+x"(vGy2),
+    					    [vGy3] "+x"(vGy3)
+    
+    					:
+    					    [vA0] "x"(vA0),
+    					    [vA1] "x"(vA1),
+    					    [vA2] "x"(vA2),
+    					    [vA3] "x"(vA3),
+    					    [vA4] "x"(vA4),
+    
+    					    [vB0] "x"(vB0),
+    					    [vB1] "x"(vB1),
+    					    [vB2] "x"(vB2),
+    					    [vB3] "x"(vB3),
+    					    [vB4] "x"(vB4)
+    				);
+    
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGy1);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGy2);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGy3);
+    
+    				// vGx1 = _mm256_sub_epi16(vGx1, vB0);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vB1);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vB2);
+    				// vGx1 = _mm256_sub_epi16(vGx1, vB0);
+    				// vGx2 = _mm256_sub_epi16(vGx2, vB1);
+    				// vGx3 = _mm256_sub_epi16(vGx3, vB2);
+    
+    				__asm__ volatile (
+    					"vpsubw %[vB0], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vB1], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vB2], %[vGx3], %[vGx3]\n\t"
+    					"vpsubw %[vB0], %[vGx1], %[vGx1]\n\t"
+    					"vpsubw %[vB1], %[vGx2], %[vGx2]\n\t"
+    					"vpsubw %[vB2], %[vGx3], %[vGx3]\n\t"
+    					:
+    					    [vGx1] "+x"(vGx1),
+    					    [vGx2] "+x"(vGx2),
+    					    [vGx3] "+x"(vGx3),
+    					    [vGy1] "+x"(vGy1),
+    					    [vGy2] "+x"(vGy2),
+    					    [vGy3] "+x"(vGy3)
+    
+    					:
+    					    [vA0] "x"(vA0),
+    					    [vA1] "x"(vA1),
+    					    [vA2] "x"(vA2),
+    					    [vA3] "x"(vA3),
+    					    [vA4] "x"(vA4),
+    
+    					    [vB0] "x"(vB0),
+    					    [vB1] "x"(vB1),
+    					    [vB2] "x"(vB2),
+    					    [vB3] "x"(vB3),
+    					    [vB4] "x"(vB4)
+    				);
+    
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGx1);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGx2);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGx3);
+    			}
+			}
+		}
+	}
 }
