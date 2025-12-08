@@ -157,6 +157,10 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB3] "x"(vB3),
     					    [vB4] "x"(vB4)
     				);
+					    
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGx1);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGx2);
+    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGx3);
     
     				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 0) * TILE_COLS + y + 1]));
     				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[j * M + (i + x + 1) * TILE_COLS + y + 1]));
@@ -170,9 +174,21 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     				// vGy1 = _mm256_add_epi16(vGy1, vB2);
     				// vGy2 = _mm256_add_epi16(vGy2, vB3);
     				// vGy3 = _mm256_add_epi16(vGy3, vB4);
+					// vGy1 = _mm256_sub_epi16(vGy1, vB0);
+    				// vGy2 = _mm256_sub_epi16(vGy2, vB1);
+    				// vGy3 = _mm256_sub_epi16(vGy3, vB2);
+    				// vGy1 = _mm256_add_epi16(vGy1, vB2);
+    				// vGy2 = _mm256_add_epi16(vGy2, vB3);
+    				// vGy3 = _mm256_add_epi16(vGy3, vB4);
     
     				__asm__ volatile (
     					"vpsubw %[vB0], %[vGy1], %[vGy1]\n\t"
+    					"vpsubw %[vB1], %[vGy2], %[vGy2]\n\t"
+    					"vpsubw %[vB2], %[vGy3], %[vGy3]\n\t"
+    					"vpaddw %[vB2], %[vGy1], %[vGy1]\n\t"
+    					"vpaddw %[vB3], %[vGy2], %[vGy2]\n\t"
+    					"vpaddw %[vB4], %[vGy3], %[vGy3]\n\t"
+						"vpsubw %[vB0], %[vGy1], %[vGy1]\n\t"
     					"vpsubw %[vB1], %[vGy2], %[vGy2]\n\t"
     					"vpsubw %[vB2], %[vGy3], %[vGy3]\n\t"
     					"vpaddw %[vB2], %[vGy1], %[vGy1]\n\t"
@@ -203,46 +219,6 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGy1);
     				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGy2);
     				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGy3);
-    
-    				// vGx1 = _mm256_sub_epi16(vGx1, vB0);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vB1);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vB2);
-    				// vGx1 = _mm256_sub_epi16(vGx1, vB0);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vB1);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vB2);
-    
-    				__asm__ volatile (
-    					"vpsubw %[vB0], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vB1], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vB2], %[vGx3], %[vGx3]\n\t"
-    					"vpsubw %[vB0], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vB1], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vB2], %[vGx3], %[vGx3]\n\t"
-    					:
-    					    [vGx1] "+x"(vGx1),
-    					    [vGx2] "+x"(vGx2),
-    					    [vGx3] "+x"(vGx3),
-    					    [vGy1] "+x"(vGy1),
-    					    [vGy2] "+x"(vGy2),
-    					    [vGy3] "+x"(vGy3)
-    
-    					:
-    					    [vA0] "x"(vA0),
-    					    [vA1] "x"(vA1),
-    					    [vA2] "x"(vA2),
-    					    [vA3] "x"(vA3),
-    					    [vA4] "x"(vA4),
-    
-    					    [vB0] "x"(vB0),
-    					    [vB1] "x"(vB1),
-    					    [vB2] "x"(vB2),
-    					    [vB3] "x"(vB3),
-    					    [vB4] "x"(vB4)
-    				);
-    
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 1) * TILE_COLS + y + 1]), vGx1);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 2) * TILE_COLS + y + 1]), vGx2);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[j * M + (i + x + 3) * TILE_COLS + y + 1]), vGx3);
     			}
 			}
 		}
