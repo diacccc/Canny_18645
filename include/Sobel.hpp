@@ -14,7 +14,7 @@
 
 // Question: Is tiling horizontal or vertical?
 
-void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* Gx, uint16_t* Gy) {
+void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, int16_t* Gx, int16_t* Gy) {
 	__m256i vGx1, vGx2, vGx3;
 	__m256i vGy1, vGy2, vGy3;
 	__m256i vA0, vA1, vA2, vA3, vA4;
@@ -157,9 +157,9 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB4] "x"(vB4)
     				);
 					    
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGx1);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGx2);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGx3);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGx1);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGx2);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGx3);
 
     				vB0 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]));
     				vB1 = _mm256_lddqu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]));
@@ -215,9 +215,9 @@ void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, uint16_t* 
     					    [vB4] "x"(vB4)
     				);
     
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGy1);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGy2);
-    				_mm256_storeu_epi16(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGy3);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGy1);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGy2);
+    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGy3);
     			}
 			}
 		}
