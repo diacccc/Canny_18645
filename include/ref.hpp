@@ -157,7 +157,9 @@ public:
                     }
 #endif
                     for ( ; j < width; ++j)
-                        _mag_n[j] = int(_dx[j])*_dx[j] + int(_dy[j])*_dy[j];
+                    {
+                        _mag_n[j] = int(_dx[j])*_dx[j] + int(_dy[j])*_dy[j];                
+                    }
                 }
                 else
                 {
@@ -179,8 +181,10 @@ public:
                         v_store_aligned((int *)(_mag_n + j + VTraits<v_int32>::vlanes()), v_add(v_dx_mh, v_dy_mh));
                     }
 #endif
-                    for ( ; j < width; ++j)
+                    for ( ; j < width; ++j) {
                         _mag_n[j] = std::abs(int(_dx[j])) + std::abs(int(_dy[j]));
+                    }
+                        
                 }
 
                 if(cn > 1)
