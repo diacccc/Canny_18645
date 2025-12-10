@@ -4,6 +4,277 @@
 #include <cstdint>
 #include <immintrin.h>
 
+#define NMS_EDGE(gx, gy, prev_mag, curr_mag, next_mag, res, high_threshold, map, LEN, POS) /*POS: 0-interior 1-first -1-last*/\
+do { \
+    const int TG22 = 13573; /* tg22 scaled constant */ \
+    for (int ii = 0; ii < LEN; ++ii) \
+    { \
+        int16_t gx_val = *(gx + ii); \
+        int16_t gy_val = *(gy + ii); \
+        int16_t mag_val = *(curr_mag + ii); \
+        *(res + ii) = 0; \
+        int x = (int)std::abs(gx_val); \
+        int y = (int)std::abs(gy_val) << 15; \
+        int tg22x = x * TG22; \
+        if (y < tg22x) \
+        { \
+            if (((POS == 1 && ii == 0) || (mag_val > *(curr_mag + ii - 1))) && ((POS == -1 && ii == LEN - 1) || (mag_val >= *(curr_mag + ii + 1)))) \
+            { \
+                *(res + ii) = mag_val; \
+            } \
+        } else \
+        { \
+            int tg67x = tg22x + (x << 16); \
+            if (y > tg67x) \
+            { \
+                if (mag_val > *(prev_mag + ii) && mag_val >= *(next_mag + ii)) \
+                { \
+                    *(res + ii) = mag_val; \
+                } \
+            } else \
+            { \
+                int s = (gx_val ^ gy_val) < 0 ? 1 : -1; \
+                if (s == 1) { \
+                    if (((POS == 1 && ii == 0) || (mag_val > *(prev_mag + ii - 1))) && ((POS == -1 && ii == LEN - 1) || (mag_val > *(next_mag + ii + 1)))) \
+                    { \
+                        *(res + ii) = mag_val; \
+                    } \
+                } else { \
+                    if (((POS == -1 && ii == LEN - 1) || (mag_val > *(prev_mag + ii + 1))) && ((POS == 1 && ii == 0) || (mag_val > *(next_mag + ii - 1)))) \
+                    { \
+                        *(res + ii) = mag_val; \
+                    } \
+                } \
+            } \
+        } \
+        if (*(res + ii) >= high_threshold) \
+            *(map + ii) = -1; \
+        else \
+            *(map + ii) = 0; \
+    } \
+} while(0)
+
+#define NMS_TILE(gx, gy, prev_mag, curr_mag, next_mag, res, high_threshold, map) \
+do{ \
+    __m256i tg22x, one, v_gx, v_gy; \
+    __m256i dir0, dir45, dir90, dir135; \
+    __m256i v_mag, v_res, v_temp0, v_temp1; \
+    __m256i v_magl, v_magr, v_magu, v_magd; \
+    \
+    v_gx = _mm256_loadu_si256((const __m256i*)gx); /* gx */ \
+    v_gy = _mm256_loadu_si256((const __m256i*)gy); /* gy */ \
+    \
+    dir135 = _mm256_xor_si256(v_gx, v_gy); /* gx ^ gy */ \
+    v_res = _mm256_setzero_si256(); \
+    one = _mm256_cmpeq_epi16(v_res, v_res); \
+    dir135 = _mm256_cmpgt_epi16(v_res, dir135); /* gx ^ gy < 0 <=> 135 deg */ \
+    \
+    v_gx = _mm256_abs_epi16(v_gx); /*|gx|*/  \
+    v_gy = _mm256_abs_epi16(v_gy); /*|gy|*/  \
+    \
+    tg22x = _mm256_broadcastw_epi16(_mm_cvtsi32_si128(27146));/* tg22 scaled constant */ \
+    tg22x = _mm256_mulhi_epi16(v_gx, tg22x); /* tg22x = |gx| * tg22 */ \
+    dir0 = _mm256_min_epi16(tg22x, v_gy); /* min(tg22x, |gy|) */ \
+    dir0 = _mm256_cmpeq_epi16(v_gy, dir0); /* |gy| <= tg22x <=> 0 degree */ \
+    \
+    v_gx = _mm256_slli_epi16(v_gx, 1); /* |gx| << 1 */ \
+    tg22x = _mm256_add_epi16(tg22x, v_gx); /* tg67x = tg22x + (|gx| << 1) */ \
+    dir45 = _mm256_min_epi16(tg22x, v_gy); /* min(tg67x, |gy|) */ \
+    dir45 = _mm256_cmpeq_epi16(v_gy, dir45); /* |gy| <= tg67x <=> 45 degree */ \
+    v_gx = _mm256_subs_epi16(one, dir0); /* |gy| > tg22x */ \
+    dir90 = _mm256_subs_epi16(one, dir45); /* |gy| > tg67x */ \
+    dir45 = _mm256_and_si256(dir45, v_gx); /* direction 45 deg */ \
+    dir135 = _mm256_and_si256(dir45, dir135); /* direction 135 deg */ \
+    dir45 = _mm256_subs_epi16(dir45, dir135); /* direction 45 deg */ \
+    \
+    v_mag = _mm256_loadu_si256((__m256i const*)curr_mag); /* mag[i, j] */ \
+    v_magl = _mm256_loadu_si256((__m256i const*)(curr_mag - 1)); /* mag[i, j - 1] */ \
+    v_magr = _mm256_loadu_si256((__m256i const*)(curr_mag + 1)); /* mag[i, j + 1] */ \
+    v_magu = _mm256_loadu_si256((__m256i const*)(prev_mag)); /* mag[i - 1, j] */ \
+    v_magd = _mm256_loadu_si256((__m256i const*)(next_mag)); /* mag[i + 1, j] */ \
+    v_magl = _mm256_cmpgt_epi16(v_mag, v_magl); /* mag[i, j] > mag[i, j - 1] */ \
+    v_magr = _mm256_cmpgt_epi16(v_mag, v_magr); /* mag[i, j] > mag[i, j + 1] */ \
+    v_magu = _mm256_cmpgt_epi16(v_mag, v_magu); /* mag[i, j] > mag[i - 1, j] */ \
+    v_magd = _mm256_cmpgt_epi16(v_mag, v_magd); /* mag[i, j] > mag[i + 1, j] */ \
+    v_temp0 = _mm256_and_si256(v_magl, v_magr); /* mag[i, j] is local max in 0 deg direction */ \
+    v_temp0 = _mm256_and_si256(v_temp0, dir0); /* direction 0 deg */ \
+    v_temp1 = _mm256_and_si256(v_magu, v_magd); /* mag[i, j] is local max in 90 deg direction */ \
+    v_temp1 = _mm256_and_si256(v_temp1, dir90); /* direction 90 deg */ \
+    \
+    v_res = _mm256_or_si256(v_temp0, v_temp1); \
+    \
+    v_magl = _mm256_loadu_si256((__m256i const*)(prev_mag - 1)); /* mag[i - 1, j - 1] */ \
+    v_magr = _mm256_loadu_si256((__m256i const*)(next_mag + 1)); /* mag[i + 1, j + 1] */ \
+    v_magu = _mm256_loadu_si256((__m256i const*)(prev_mag + 1)); /* mag[i - 1, j + 1] */ \
+    v_magd = _mm256_loadu_si256((__m256i const*)(next_mag - 1)); /* mag[i + 1, j - 1] */ \
+    v_magl = _mm256_cmpgt_epi16(v_mag, v_magl); /* mag[i, j] > mag[i - 1, j - 1] */ \
+    v_magr = _mm256_cmpgt_epi16(v_mag, v_magr); /* mag[i, j] > mag[i + 1, j + 1] */ \
+    v_temp0 = _mm256_and_si256(v_magl, v_magr); /* mag[i, j] is local max in 135 deg direction */ \
+    v_temp0 = _mm256_and_si256(v_temp0, dir135); /* direction 135 deg */ \
+    v_res = _mm256_or_si256(v_res, v_temp0); \
+    \
+    v_magu = _mm256_cmpgt_epi16(v_mag, v_magu); /* mag[i, j] > mag[i - 1, j + 1] */ \
+    v_magd = _mm256_cmpgt_epi16(v_mag, v_magd); /* mag[i, j] > mag[i + 1, j - 1] */ \
+    v_temp1 = _mm256_and_si256(v_magu, v_magd); /* mag[i, j] is local max in 45 deg direction */ \
+    v_temp1 = _mm256_and_si256(v_temp1, dir45); /* direction 45 deg */ \
+    v_res = _mm256_or_si256(v_res, v_temp1); \
+    \
+    v_res = _mm256_and_si256(v_mag, v_res); /* keep mag where local maxima */ \
+    _mm256_storeu_si256((__m256i*)res, v_res); \
+    one = _mm256_broadcastw_epi16(_mm_cvtsi32_si128(high_threshold)); \
+    v_temp0 = _mm256_cmpgt_epi16(v_res, one); \
+    _mm256_storeu_si256((__m256i*)map, v_temp0); \
+}while(0)
+
+
+
+// L1 cache size: 32k (8-way set associative, 64-byte line size)
+// 2-byte per pixel for gx, gy, mag, res, map. 
+// Each line can hold 64/2 = 32 pixels.
+// Each way can hold 32k / 8 = 4kB = 4096 bytes = 2048 pixels.
+// We can use 7 ways for a tile (1 way for gx, 1 way for gy, 3 ways for mag, 1 way for res, 1 way for map).
+
+void non_max_suppression(const int16_t* gx, const int16_t* gy, 
+                        const int16_t* mag, const int high_threshold, int16_t *res, int16_t* map, int M, int N)
+{
+    const int BLOCK_WIDTH = 2032; // 2032 pixels per block to fit in L1 cache
+    std::vector<int16_t> zero_buf(16, 0);
+    for (int j = 1; j < N; j += BLOCK_WIDTH) {
+        printf("Processing block starting at column %d\n", j);
+        int block_width = std::min(BLOCK_WIDTH, N - j - 1);
+        block_width = block_width & (~15); // make it multiple of 16
+        // Initialize pointers for the first two rows
+        // Process each row
+        const int16_t* gx_ptr = gx + (0 * N);
+        const int16_t* gy_ptr = gy + (0 * N);
+        int16_t* res_ptr = res + (0 * N);
+        int16_t* map_ptr = map + (0 * N);
+        const int16_t* prev_mag_ptr = zero_buf.data(); // zero for the first row
+        const int16_t* curr_mag_ptr = mag + ((0 + 0) * N);
+        const int16_t* next_mag_ptr = mag + ((0 + 1) * N);
+
+        if (j == 1) {
+            NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, 1, 1);
+            gx_ptr += 1;
+            gy_ptr += 1;
+            curr_mag_ptr += 1;
+            next_mag_ptr += 1;
+            res_ptr += 1;
+            map_ptr += 1;
+        } else {
+            gx_ptr += j;
+            gy_ptr += j;
+            curr_mag_ptr += j;
+            next_mag_ptr += j;
+            res_ptr += j;
+            map_ptr += j;
+        }
+        for (int k = 0; k < block_width; k += 16) {
+            NMS_TILE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr);
+            gx_ptr += 16;
+            gy_ptr += 16;
+            curr_mag_ptr += 16;
+            next_mag_ptr += 16;
+            res_ptr += 16;
+            map_ptr += 16;
+        }
+        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+            // Process the last column separately to handle right border
+            const int LEN = N - j - 1 - block_width;
+            NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
+        }
+
+        for (int i = 1; i < M - 1; ++i) {
+            gx_ptr = gx + (i * N);
+            gy_ptr = gy + (i * N);
+            res_ptr = res + (i * N);
+            map_ptr = map + (i * N);
+            curr_mag_ptr = mag + ((i + 0) * N);
+            prev_mag_ptr = mag + ((i - 1) * N);
+            next_mag_ptr = mag + ((i + 1) * N);
+
+            if (j == 1) {
+                // Process the first column separately to handle left border
+                NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, 1, 1);
+                gx_ptr += 1;
+                gy_ptr += 1;
+                curr_mag_ptr += 1;
+                prev_mag_ptr += 1;
+                next_mag_ptr += 1;
+                res_ptr += 1;
+                map_ptr += 1;
+            } else {
+                gx_ptr += j;
+                gy_ptr += j;
+                curr_mag_ptr += j;
+                prev_mag_ptr += j;
+                next_mag_ptr += j;
+                res_ptr += j;
+                map_ptr += j;
+            }
+            for (int k = 0; k < block_width; k += 16) {
+                NMS_TILE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr);
+                gx_ptr += 16;
+                gy_ptr += 16;
+                prev_mag_ptr += 16;
+                curr_mag_ptr += 16;
+                next_mag_ptr += 16;
+                res_ptr += 16;
+                map_ptr += 16;
+            }
+            if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+                // Process the last column separately to handle right border
+                const int LEN = N - j - 1 - block_width;
+                NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
+            }
+        }
+
+        gx_ptr = gx + (0 * N);
+        gy_ptr = gy + (0 * N);
+        res_ptr = res + (0 * N);
+        map_ptr = map + (0 * N);
+        prev_mag_ptr = mag + ((M - 2) * N); // zero for the last row
+        curr_mag_ptr = mag + ((M - 1) * N);
+        next_mag_ptr = zero_buf.data();
+
+
+        if (j == 1) {
+            NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, 1, 1);
+            gx_ptr += 1;
+            gy_ptr += 1;
+            curr_mag_ptr += 1;
+            prev_mag_ptr += 1;
+            res_ptr += 1;
+            map_ptr += 1;
+        } else {
+            gx_ptr += j;
+            gy_ptr += j;
+            curr_mag_ptr += j;
+            prev_mag_ptr += j;
+            res_ptr += j;
+            map_ptr += j;
+        }
+        for (int k = 0; k < block_width; k += 16) {
+            NMS_TILE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr);
+            gx_ptr += 16;
+            gy_ptr += 16;
+            prev_mag_ptr += 16;
+            curr_mag_ptr += 16;
+            res_ptr += 16;
+            map_ptr += 16;
+        }
+        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+            // Process the last column separately to handle right border
+            const int LEN = N - j - 1 - block_width;
+            NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
+        }
+
+    }
+    
+}
+
+#if 0
+
 // void non_max_suppression(const int16_t* gx, const int16_t* gy, 
 //                         const int16_t* mag, int16_t *res, int M, int N);
 #define NMS_KERNEL_REF(gx, gy, mag, res, M, N) \
@@ -124,8 +395,6 @@ do{ \
     _mm256_storeu_si256((__m256i*)res, v_res); \
 }while(0)
 
-
-#if 0
 
 #define NMS_KERNEL_2x16(gx, gy, mag, res, M, N) \
 do{ \
