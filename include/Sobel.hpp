@@ -10,216 +10,92 @@
     gy[idx] = (int16_t) src[idx - step + 1] + 2*(int16_t) src[idx + 1] + (int16_t) src[idx + step + 1] - \
                (int16_t) src[idx - step - 1] - 2*(int16_t) src[idx - 1] - (int16_t) src[idx + step - 1]; \
 
+// void SOBEL_TILE(int16_t* gx1, int16_t* gx2, int16_t* gx3, int16_t* gx4, int16_t* gy1, int16_t* gy2, int16_t* gy3, int16_t* gy4, uint16_t* src0, uint16_t* src1, uint16_t* src2, uint16_t* src3, uint16_t* src4, uint16_t* src5)
+#define SOBEL_TILE(gx1, gx2, gx3, gx4, gy1, gy2, gy3, gy4, src0, src1, src2, src3, src4, src5) \
+do { \
+	__m256i v_gx1, v_gx2, v_gx3, v_gx4; \
+	__m256i v_gy1, v_gy2, v_gy3, v_gy4; \
+	__m256i v_src0, v_src1, v_src2, v_src3, v_src4, v_src5; \
+
+	v_src0 = _mm256_loadu_si256((const __m256i*) (src0 + 2)); \
+	v_src1 = _mm256_loadu_si256((const __m256i*) (src1 + 2)); \
+	v_src2 = _mm256_loadu_si256((const __m256i*) (src2 + 2)); \
+	v_src3 = _mm256_loadu_si256((const __m256i*) (src3 + 2)); \
+	v_src4 = _mm256_loadu_si256((const __m256i*) (src4 + 2)); \
+	v_src5 = _mm256_loadu_si256((const __m256i*) (src5 + 2)); \
+
+	v_gx1 = _mm256_add_epi16(src0, src2); \
+	v_gx2 = _mm256_add_epi16(src1, src3); \
+	v_gx3 = _mm256_add_epi16(src2, src4); \
+	v_gx4 = _mm256_add_epi16(src3, src5); \
+
+	v_gy1 = _mm256_sub_epi16(src2, src0); \
+	v_gy2 = _mm256_sub_epi16(src3, src1); \
+	v_gy3 = _mm256_sub_epi16(src4, src2); \
+	v_gy4 = _mm256_sub_epi16(src5, src3); \
+
+	v_gx1 = _mm256_add_epi16(gx1, src1); \
+	v_gx2 = _mm256_add_epi16(gx2, src2); \
+	v_gx3 = _mm256_add_epi16(gx3, src3); \
+	v_gx4 = _mm256_add_epi16(gx4, src4); \
+
+	v_gx1 = _mm256_add_epi16(gx1, src1); \
+	v_gx2 = _mm256_add_epi16(gx2, src2); \
+	v_gx3 = _mm256_add_epi16(gx3, src3); \
+	v_gx4 = _mm256_add_epi16(gx4, src4); \
+
+	v_src0 = _mm256_loadu_si256((const __m256i*) (src0)); \
+	v_src1 = _mm256_loadu_si256((const __m256i*) (src1)); \
+	v_src2 = _mm256_loadu_si256((const __m256i*) (src2)); \
+	v_src3 = _mm256_loadu_si256((const __m256i*) (src3)); \
+	v_src4 = _mm256_loadu_si256((const __m256i*) (src4)); \
+	v_src5 = _mm256_loadu_si256((const __m256i*) (src5)); \
+
+	v_gx1 = _mm256_sub_epi16(v_gx1, src0); \
+	v_gx2 = _mm256_sub_epi16(v_gx2, src1); \
+	v_gx3 = _mm256_sub_epi16(v_gx3, src2); \
+	v_gx4 = _mm256_sub_epi16(v_gx4, src3); \
+
+	v_gy1 = _mm256_sub_epi16(v_gy1, src0); \
+	v_gy2 = _mm256_sub_epi16(v_gy2, src1); \
+	v_gy3 = _mm256_sub_epi16(v_gy3, src2); \
+	v_gy4 = _mm256_sub_epi16(v_gy4, src3); \
+
+	v_gx1 = _mm256_sub_epi16(v_gx1, src2); \
+	v_gx2 = _mm256_sub_epi16(v_gx2, src3); \
+	v_gx3 = _mm256_sub_epi16(v_gx3, src4); \
+	v_gx4 = _mm256_sub_epi16(v_gx4, src5); \
+
+	v_gy1 = _mm256_add_epi16(v_gy1, src2); \
+	v_gy2 = _mm256_add_epi16(v_gy2, src3); \
+	v_gy3 = _mm256_add_epi16(v_gy3, src4); \
+	v_gy4 = _mm256_add_epi16(v_gy4, src5); \
+
+	v_src0 = _mm256_loadu_si256((const __m256i*) (src0 + 1)); \
+	v_src1 = _mm256_loadu_si256((const __m256i*) (src1 + 1)); \
+	v_src2 = _mm256_loadu_si256((const __m256i*) (src2 + 1)); \
+	v_src3 = _mm256_loadu_si256((const __m256i*) (src3 + 1)); \
+	v_src4 = _mm256_loadu_si256((const __m256i*) (src4 + 1)); \
+	v_src5 = _mm256_loadu_si256((const __m256i*) (src5 + 1)); \
+
+	v_gy1 = _mm256_sub_epi16(v_gy1, src0); \
+	v_gy2 = _mm256_sub_epi16(v_gy2, src1); \
+	v_gy3 = _mm256_sub_epi16(v_gy3, src2); \
+	v_gy4 = _mm256_sub_epi16(v_gy4, src3); \
+
+	v_gy1 = _mm256_add_epi16(v_gy1, src2); \
+	v_gy2 = _mm256_add_epi16(v_gy2, src3); \
+	v_gy3 = _mm256_add_epi16(v_gy3, src4); \
+	v_gy4 = _mm256_add_epi16(v_gy4, src5); \
+
+	_mm256_storeu_si256((__m256i*) (gx1), v_gx1); \
+	_mm256_storeu_si256((__m256i*) (gx2), v_gx2); \
+	_mm256_storeu_si256((__m256i*) (gx3), v_gx3); \
+	_mm256_storeu_si256((__m256i*) (gx4), v_gx4); \
+	_mm256_storeu_si256((__m256i*) (gy1), v_gy1); \
+	_mm256_storeu_si256((__m256i*) (gy2), v_gy2); \
+	_mm256_storeu_si256((__m256i*) (gy3), v_gy3); \
+	_mm256_storeu_si256((__m256i*) (gy4), v_gy4); \
+} while (0)
+
 #endif
-
-// Question: Is tiling horizontal or vertical?
-
-void sobel(uint16_t* Img, int M, int N, int TILE_ROWS, int TILE_COLS, int16_t* Gx, int16_t* Gy) {
-	__m256i vGx1, vGx2, vGx3;
-	__m256i vGy1, vGy2, vGy3;
-	__m256i vA0, vA1, vA2, vA3, vA4;
-	__m256i vB0, vB1, vB2, vB3, vB4;
-	for (int i = 0; i < M; i += TILE_ROWS) {
-		for (int j = 0; j < N; j += TILE_COLS) {
-			for (int x = 0; x < TILE_ROWS - 4; x += 3) {
-				for (int y = 0; y < TILE_COLS; y += 16) {
-    				vA0 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y]));
-    				vA1 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y]));
-    				vA2 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y]));
-    				vA3 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y]));
-    				vA4 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y]));
-    				vB0 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 2]));
-    				vB1 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 2]));
-    				vB2 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 2]));
-    				vB3 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y + 2]));
-    				vB4 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y + 2]));
-    
-    				// vGx1 = _mm256_add_epi16(vB1, vB1);
-    				// vGx2 = _mm256_add_epi16(vB2, vB2);
-    				// vGx3 = _mm256_add_epi16(vB3, vB3);
-    
-    				// vGy1 = _mm256_sub_epi16(vB2, vB0);
-    				// vGy2 = _mm256_sub_epi16(vB3, vB1);
-    				// vGy3 = _mm256_sub_epi16(vB4, vB2);
-    
-    				// vGx1 = _mm256_add_epi16(vGx1, vB0);
-    				// vGx2 = _mm256_add_epi16(vGx2, vB1);
-    				// vGx3 = _mm256_add_epi16(vGx3, vB2);
-    				// vGx1 = _mm256_add_epi16(vGx1, vB2);
-    				// vGx2 = _mm256_add_epi16(vGx2, vB3);
-    				// vGx3 = _mm256_add_epi16(vGx3, vB4);
-    
-    				__asm__ volatile (
-    					"vpaddw %[vB1], %[vB1], %[vGx1]\n\t"
-    					"vpaddw %[vB2], %[vB2], %[vGx2]\n\t"
-    					"vpaddw %[vB3], %[vB3], %[vGx3]\n\t"
-    
-    					"vpsubw %[vB0], %[vB2], %[vGy1]\n\t"
-    					"vpsubw %[vB1], %[vB3], %[vGy2]\n\t"
-    					"vpsubw %[vB2], %[vB4], %[vGy3]\n\t"
-    
-    					"vpaddw %[vB0], %[vGx1], %[vGx1]\n\t"
-    					"vpaddw %[vB1], %[vGx2], %[vGx2]\n\t"
-    					"vpaddw %[vB2], %[vGx3], %[vGx3]\n\t"
-    					"vpaddw %[vB2], %[vGx1], %[vGx1]\n\t"
-    					"vpaddw %[vB3], %[vGx2], %[vGx2]\n\t"
-    					"vpaddw %[vB4], %[vGx3], %[vGx3]\n\t"
-    					:
-    					    [vGx1] "+x"(vGx1),
-    					    [vGx2] "+x"(vGx2),
-    					    [vGx3] "+x"(vGx3),
-    					    [vGy1] "+x"(vGy1),
-    					    [vGy2] "+x"(vGy2),
-    					    [vGy3] "+x"(vGy3)
-    
-    					:
-    					    [vA0] "x"(vA0),
-    					    [vA1] "x"(vA1),
-    					    [vA2] "x"(vA2),
-    					    [vA3] "x"(vA3),
-    					    [vA4] "x"(vA4),
-    
-    					    [vB0] "x"(vB0),
-    					    [vB1] "x"(vB1),
-    					    [vB2] "x"(vB2),
-    					    [vB3] "x"(vB3),
-    					    [vB4] "x"(vB4)
-    				);
-    
-    
-    				// vGx1 = _mm256_sub_epi16(vGx1, vA0);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vA1);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vA2);
-    
-    				// vGy1 = _mm256_sub_epi16(vGy1, vA0);
-    				// vGy2 = _mm256_sub_epi16(vGy2, vA1);
-    				// vGy3 = _mm256_sub_epi16(vGy3, vA2);
-    
-    				// vGx1 = _mm256_sub_epi16(vGx1, vA2);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vA3);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vA4);
-    
-    				// vGy1 = _mm256_add_epi16(vGy1, vA2);
-    				// vGy2 = _mm256_add_epi16(vGy2, vA3);
-    				// vGy3 = _mm256_add_epi16(vGy3, vA4);
-    
-    				// vGx1 = _mm256_sub_epi16(vGx1, vA1);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vA2);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vA3);
-    				// vGx1 = _mm256_sub_epi16(vGx1, vA1);
-    				// vGx2 = _mm256_sub_epi16(vGx2, vA2);
-    				// vGx3 = _mm256_sub_epi16(vGx3, vA3);
-    
-    				__asm__ volatile (
-    					"vpsubw %[vA0], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vA1], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vA2], %[vGx3], %[vGx3]\n\t"
-    
-    					"vpsubw %[vA0], %[vGy1], %[vGy1]\n\t"
-    					"vpsubw %[vA1], %[vGy2], %[vGy2]\n\t"
-    					"vpsubw %[vA2], %[vGy3], %[vGy3]\n\t"
-    
-    					"vpsubw %[vA2], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vA3], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vA4], %[vGx3], %[vGx3]\n\t"
-    
-    
-    					"vpaddw %[vA2], %[vGy1], %[vGy1]\n\t"
-    					"vpaddw %[vA3], %[vGy2], %[vGy2]\n\t"
-    					"vpaddw %[vA4], %[vGy3], %[vGy3]\n\t"
-    
-    
-    					"vpsubw %[vA1], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vA2], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vA3], %[vGx3], %[vGx3]\n\t"
-    					"vpsubw %[vA1], %[vGx1], %[vGx1]\n\t"
-    					"vpsubw %[vA2], %[vGx2], %[vGx2]\n\t"
-    					"vpsubw %[vA3], %[vGx3], %[vGx3]\n\t"
-    					:
-    					    [vGx1] "+x"(vGx1),
-    					    [vGx2] "+x"(vGx2),
-    					    [vGx3] "+x"(vGx3),
-    					    [vGy1] "+x"(vGy1),
-    					    [vGy2] "+x"(vGy2),
-    					    [vGy3] "+x"(vGy3)
-    
-    					:
-    					    [vA0] "x"(vA0),
-    					    [vA1] "x"(vA1),
-    					    [vA2] "x"(vA2),
-    					    [vA3] "x"(vA3),
-    					    [vA4] "x"(vA4),
-    
-    					    [vB0] "x"(vB0),
-    					    [vB1] "x"(vB1),
-    					    [vB2] "x"(vB2),
-    					    [vB3] "x"(vB3),
-    					    [vB4] "x"(vB4)
-    				);
-					    
-
-    				vB0 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]));
-    				vB1 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]));
-    				vB2 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]));
-    				vB3 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 3) * TILE_COLS + y + 1]));
-    				vB4 = _mm256_loadu_si256(reinterpret_cast<__m256i*>(&Img[i * N + j * TILE_ROWS + (x + 4) * TILE_COLS + y + 1]));
-    
-    				// vGy1 = _mm256_sub_epi16(vGy1, vB0);
-    				// vGy2 = _mm256_sub_epi16(vGy2, vB1);
-    				// vGy3 = _mm256_sub_epi16(vGy3, vB2);
-    				// vGy1 = _mm256_add_epi16(vGy1, vB2);
-    				// vGy2 = _mm256_add_epi16(vGy2, vB3);
-    				// vGy3 = _mm256_add_epi16(vGy3, vB4);
-					// vGy1 = _mm256_sub_epi16(vGy1, vB0);
-    				// vGy2 = _mm256_sub_epi16(vGy2, vB1);
-    				// vGy3 = _mm256_sub_epi16(vGy3, vB2);
-    				// vGy1 = _mm256_add_epi16(vGy1, vB2);
-    				// vGy2 = _mm256_add_epi16(vGy2, vB3);
-    				// vGy3 = _mm256_add_epi16(vGy3, vB4);
-    
-    				__asm__ volatile (
-    					"vpsubw %[vB0], %[vGy1], %[vGy1]\n\t"
-    					"vpsubw %[vB1], %[vGy2], %[vGy2]\n\t"
-    					"vpsubw %[vB2], %[vGy3], %[vGy3]\n\t"
-    					"vpaddw %[vB2], %[vGy1], %[vGy1]\n\t"
-    					"vpaddw %[vB3], %[vGy2], %[vGy2]\n\t"
-    					"vpaddw %[vB4], %[vGy3], %[vGy3]\n\t"
-						"vpsubw %[vB0], %[vGy1], %[vGy1]\n\t"
-    					"vpsubw %[vB1], %[vGy2], %[vGy2]\n\t"
-    					"vpsubw %[vB2], %[vGy3], %[vGy3]\n\t"
-    					"vpaddw %[vB2], %[vGy1], %[vGy1]\n\t"
-    					"vpaddw %[vB3], %[vGy2], %[vGy2]\n\t"
-    					"vpaddw %[vB4], %[vGy3], %[vGy3]\n\t"
-    					:
-    					    [vGx1] "+x"(vGx1),
-    					    [vGx2] "+x"(vGx2),
-    					    [vGx3] "+x"(vGx3),
-    					    [vGy1] "+x"(vGy1),
-    					    [vGy2] "+x"(vGy2),
-    					    [vGy3] "+x"(vGy3)
-    
-    					:
-    					    [vA0] "x"(vA0),
-    					    [vA1] "x"(vA1),
-    					    [vA2] "x"(vA2),
-    					    [vA3] "x"(vA3),
-    					    [vA4] "x"(vA4),
-    
-    					    [vB0] "x"(vB0),
-    					    [vB1] "x"(vB1),
-    					    [vB2] "x"(vB2),
-    					    [vB3] "x"(vB3),
-    					    [vB4] "x"(vB4)
-    				);
-    
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGx1);
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGx2);
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gx[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGx3);
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 0) * TILE_COLS + y + 1]), vGy1);
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 1) * TILE_COLS + y + 1]), vGy2);
-    				_mm256_storeu_si256(reinterpret_cast<__m256i*>(&Gy[i * N + j * TILE_ROWS + (x + 2) * TILE_COLS + y + 1]), vGy3);
-    			}
-			}
-		}
-	}
-}
