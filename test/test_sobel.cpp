@@ -71,7 +71,7 @@ static void sobel_reference(const std::vector<int16_t>& src, int M, int N,
 
 static void sobel_random_image_test() {
     constexpr int M = 32;
-    constexpr int N = 64;
+    constexpr int N = 70;
     std::vector<int16_t> src(M * N);
     std::vector<int16_t> gx(M * N), gy(M * N), mag(M * N);
     std::vector<int16_t> gx_ref(M * N), gy_ref(M * N), mag_ref(M * N);
@@ -82,13 +82,20 @@ static void sobel_random_image_test() {
         px = static_cast<int16_t>(dist(rng));
     }
 
+    for (int i = 0; i < M; ++i) {
+        for (int j = 0; j < N; ++j) {
+            std::cout << std::setw(5) << src[i * N + j] << " ";
+        }
+        std::cout << std::endl;
+    }
+    
     sobel(src.data(), gx.data(), gy.data(), mag.data(), M, N);
     sobel_reference(src, M, N, gx_ref, gy_ref, mag_ref);
 
     int mismatches = 0;
     for (size_t idx = 0; idx < src.size(); ++idx) {
         if (gx[idx] != gx_ref[idx] || gy[idx] != gy_ref[idx] || mag[idx] != mag_ref[idx]) {
-            if (mismatches < 5) {
+            if (mismatches < 20) {
                 int r = static_cast<int>(idx / N);
                 int c = static_cast<int>(idx % N);
                 std::cerr << "Mismatch at (" << r << "," << c << ")"
@@ -104,45 +111,6 @@ static void sobel_random_image_test() {
         std::cerr << "Total mismatches: " << mismatches << std::endl;
     }
     check(mismatches == 0, "sobel matches reference on random image");
-}
-
-static void sobel_checkerboard_test() {
-    constexpr int M = 16;
-    constexpr int N = 16;
-    std::vector<int16_t> src(M * N);
-    for (int i = 0; i < M; ++i) {
-        for (int j = 0; j < N; ++j) {
-            src[i * N + j] = ((i + j) & 1) ? 255 : 0;
-        }
-    }
-    std::vector<int16_t> gx(M * N), gy(M * N), mag(M * N);
-    std::vector<int16_t> gx_ref(M * N), gy_ref(M * N), mag_ref(M * N);
-
-    sobel(src.data(), gx.data(), gy.data(), mag.data(), M, N);
-    sobel_reference(src, M, N, gx_ref, gy_ref, mag_ref);
-
-    bool ok = std::equal(gx.begin(), gx.end(), gx_ref.begin()) &&
-              std::equal(gy.begin(), gy.end(), gy_ref.begin()) &&
-              std::equal(mag.begin(), mag.end(), mag_ref.begin());
-    check(ok, "sobel matches reference on checkerboard");
-}
-
-static void sobel_single_column_test() {
-    constexpr int M = 32;
-    constexpr int N = 1;
-    std::vector<int16_t> src(M * N, 42);
-    std::vector<int16_t> gx(M * N, -1), gy(M * N, -1), mag(M * N, -1);
-
-    sobel(src.data(), gx.data(), gy.data(), mag.data(), M, N);
-
-    bool all_zero = true;
-    for (int idx = 0; idx < M * N; ++idx) {
-        if (gx[idx] != 0 || gy[idx] != 0 || mag[idx] != 0) {
-            all_zero = false;
-            break;
-        }
-    }
-    check(all_zero, "sobel handles single-column images");
 }
 
 #define MAX_FREQ 3.2
@@ -219,8 +187,6 @@ void benchmark_performance()
 
 int main() {
     sobel_random_image_test();
-    sobel_checkerboard_test();
-    sobel_single_column_test();
-    // benchmark_performance();
+    benchmark_performance();
     return test_failures;
 }

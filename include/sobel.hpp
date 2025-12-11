@@ -21,17 +21,17 @@ do { \
         const int has_left  = !(POS == 1 && ii == 0); \
         const int has_right = !(POS == -1 && ii == LEN - 1); \
 \
-        int16_t p_ul = has_left  ? *(prev_row + ii - 1) : *(prev_row + ii); \
+        int16_t p_ul = has_left  ? *(prev_row + ii - 1) : 0; \
         int16_t p_u  = *(prev_row + ii); \
-        int16_t p_ur = has_right ? *(prev_row + ii + 1) : *(prev_row + ii); \
+        int16_t p_ur = has_right ? *(prev_row + ii + 1) : 0; \
 \
-        int16_t p_ml = has_left  ? *(curr_row + ii - 1) : *(curr_row + ii); \
+        int16_t p_ml = has_left  ? *(curr_row + ii - 1) : 0; \
         int16_t p_m  = *(curr_row + ii); \
-        int16_t p_mr = has_right ? *(curr_row + ii + 1) : *(curr_row + ii); \
+        int16_t p_mr = has_right ? *(curr_row + ii + 1) : 0; \
 \
-        int16_t p_ll = has_left  ? *(next_row + ii - 1) : *(next_row + ii); \
+        int16_t p_ll = has_left  ? *(next_row + ii - 1) : 0; \
         int16_t p_l  = *(next_row + ii); \
-        int16_t p_lr = has_right ? *(next_row + ii + 1) : *(next_row + ii); \
+        int16_t p_lr = has_right ? *(next_row + ii + 1) : 0; \
 \
         /* Sobel Gx */ \
         int gx_val = -p_ul + p_ur \
@@ -54,14 +54,14 @@ do { \
 	__m256i v_gx1, v_gx2, v_gx3, v_gx4; \
 	__m256i v_gy1, v_gy2, v_gy3, v_gy4; \
 	__m256i v_src0, v_src1, v_src2, v_src3, v_src4, v_src5, v_src6, v_src7; \
-	v_src0 = _mm256_loadu_si256((__m256i*)((src0))); \
-	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 16)); \
-	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 32)); \
-	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 48)); \
-	v_src4 = _mm256_loadu_si256((__m256i*)((src0) + 2)); \
-	v_src5 = _mm256_loadu_si256((__m256i*)((src0) + 18)); \
-	v_src6 = _mm256_loadu_si256((__m256i*)((src0) + 34)); \
-	v_src7 = _mm256_loadu_si256((__m256i*)((src0) + 50)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src0) - 1)); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 15)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 31)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 47)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src0) + 1)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src0) + 17)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src0) + 33)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src0) + 49)); \
 	v_gx1 = _mm256_sub_epi16(v_src4, v_src0); \
 	v_gx2 = _mm256_sub_epi16(v_src5, v_src1); \
 	v_gx3 = _mm256_sub_epi16(v_src6, v_src2); \
@@ -70,14 +70,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_src1, v_src5); \
 	v_gy3 = _mm256_add_epi16(v_src2, v_src6); \
 	v_gy4 = _mm256_add_epi16(v_src3, v_src7); \
-	v_src0 = _mm256_loadu_si256((__m256i*)((src0 + 1))); \
-	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 17)); \
-	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 33)); \
-	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 49)); \
-	v_src4 = _mm256_loadu_si256((__m256i*)((src1))); \
-	v_src5 = _mm256_loadu_si256((__m256i*)((src1) + 16)); \
-	v_src6 = _mm256_loadu_si256((__m256i*)((src1) + 32)); \
-	v_src7 = _mm256_loadu_si256((__m256i*)((src1) + 48)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src0))); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 16)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 32)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 48)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src1) - 1)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src1) + 15)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src1) + 31)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src1) + 47)); \
 	v_gx1 = _mm256_sub_epi16(v_gx1, v_src4); \
 	v_gx2 = _mm256_sub_epi16(v_gx2, v_src5); \
 	v_gx3 = _mm256_sub_epi16(v_gx3, v_src6); \
@@ -94,14 +94,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_gy2, v_src1); \
 	v_gy3 = _mm256_add_epi16(v_gy3, v_src2); \
 	v_gy4 = _mm256_add_epi16(v_gy4, v_src3); \
-	v_src0 = _mm256_loadu_si256((__m256i*)((src1) + 2)); \
-	v_src1 = _mm256_loadu_si256((__m256i*)((src1) + 18)); \
-	v_src2 = _mm256_loadu_si256((__m256i*)((src1) + 34)); \
-	v_src3 = _mm256_loadu_si256((__m256i*)((src1) + 50)); \
-	v_src4 = _mm256_loadu_si256((__m256i*)((src2) + 1)); \
-	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 17)); \
-	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 33)); \
-	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 49)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src1) + 1)); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src1) + 17)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src1) + 33)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src1) + 49)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src2))); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 16)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 32)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 48)); \
 	v_gx1 = _mm256_add_epi16(v_gx1, v_src0); \
 	v_gx2 = _mm256_add_epi16(v_gx2, v_src1); \
 	v_gx3 = _mm256_add_epi16(v_gx3, v_src2); \
@@ -118,14 +118,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_gy2, v_src5); \
 	v_gy3 = _mm256_add_epi16(v_gy3, v_src6); \
 	v_gy4 = _mm256_add_epi16(v_gy4, v_src7); \
-	v_src0 = _mm256_loadu_si256((__m256i*)((src2)));\
-	v_src1 = _mm256_loadu_si256((__m256i*)((src2) + 16)); \
-	v_src2 = _mm256_loadu_si256((__m256i*)((src2) + 32)); \
-	v_src3 = _mm256_loadu_si256((__m256i*)((src2) + 48)); \
-	v_src4 = _mm256_loadu_si256((__m256i*)((src2) + 2)); \
-	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 18)); \
-	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 34)); \
-	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 50)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src2) - 1));\
+	v_src1 = _mm256_loadu_si256((__m256i*)((src2) + 15)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src2) + 31)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src2) + 47)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src2) + 1)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 17)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 33)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 49)); \
 	v_gx1 = _mm256_sub_epi16(v_gx1, v_src0); \
 	v_gx2 = _mm256_sub_epi16(v_gx2, v_src1); \
 	v_gx3 = _mm256_sub_epi16(v_gx3, v_src2); \
@@ -170,11 +170,12 @@ do { \
 } while (0)
 
 
+
 void sobel(const int16_t* src, int16_t* gx, int16_t* gy,
                         int16_t* mag, int M, int N)
 {
     const int BLOCK_WIDTH = 2032; // 2032 pixels per block to fit in L1 cache
-    std::vector<int16_t> zero_buf(64, 0);
+    std::vector<int16_t> zero_buf(80, 0);
     for (int j = 1; j < N; j += BLOCK_WIDTH) {
         int block_width = std::min(BLOCK_WIDTH, N - j - 1);
         block_width = block_width & (~63); // make it multiple of 64
@@ -208,9 +209,10 @@ void sobel(const int16_t* src, int16_t* gx, int16_t* gy,
             next_src_ptr += 64;
             mag_ptr += 64;
         }
-        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+        if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
+            printf("Processing first row last edge: j=%d, block_width=%d, N=%d\n", j, block_width, N);
             // Process the last column separately to handle right border
-            const int LEN = N - j - 1 - block_width;
+            const int LEN = N - j - block_width;
             SOBEL_EDGE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr, LEN, -1);
         }
 
@@ -226,27 +228,46 @@ void sobel(const int16_t* src, int16_t* gx, int16_t* gy,
                 SOBEL_EDGE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr, block_width, 1);
                 gx_ptr += 1;
                 gy_ptr += 1;
+                prev_src_ptr += 1;
                 curr_src_ptr += 1;
                 next_src_ptr += 1;
                 mag_ptr += 1;
             } else {
                 gx_ptr += j;
                 gy_ptr += j;
+                prev_src_ptr += j;
                 curr_src_ptr += j;
                 next_src_ptr += j;
                 mag_ptr += j;
             }
             for (int k = 0; k < block_width; k += 64) {
+                if (k == 0 && i == 1) {
+                    // For debugging: print the first 64 pixels of the current row being processed
+                    std::cout << "First Tile of row " << i << " :" << std::endl;
+                    for (int i = -1; i < 65; ++i) {
+                        std::cout << (int)*(prev_src_ptr + i) << " ";
+                    }
+                    std::cout << std::endl;
+                    for (int i = -1; i < 65; ++i) {
+                        std::cout << (int)*(curr_src_ptr + i) << " ";
+                    }
+                    std::cout << std::endl;
+                    for (int i = -1; i < 65; ++i) {
+                        std::cout << (int)*(next_src_ptr + i) << " ";
+                    }
+                    std::cout << std::endl;
+                }
                 SOBEL_TILE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr);
                 gx_ptr += 64;
                 gy_ptr += 64;
+                prev_src_ptr += 64;
                 curr_src_ptr += 64;
                 next_src_ptr += 64;
                 mag_ptr += 64;
             }
-            if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+            if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
                 // Process the last column separately to handle right border
-                const int LEN = N - j - 1 - block_width;
+                const int LEN = N - j - block_width;
                 SOBEL_EDGE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr, LEN, -1);
             }
         }
@@ -262,27 +283,27 @@ void sobel(const int16_t* src, int16_t* gx, int16_t* gy,
             SOBEL_EDGE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr, block_width, 1);
             gx_ptr += 1;
             gy_ptr += 1;
+            prev_src_ptr += 1;
             curr_src_ptr += 1;
-            next_src_ptr += 1;
             mag_ptr += 1;
         } else {
             gx_ptr += j;
             gy_ptr += j;
+            prev_src_ptr += j;
             curr_src_ptr += j;
-            next_src_ptr += j;
             mag_ptr += j;
         }
         for (int k = 0; k < block_width; k += 64) {
             SOBEL_TILE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr);
             gx_ptr += 64;
             gy_ptr += 64;
+            prev_src_ptr += 64;
             curr_src_ptr += 64;
-            next_src_ptr += 64;
             mag_ptr += 64;
         }
-        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+        if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
             // Process the last column separately to handle right border
-            const int LEN = N - j - 1 - block_width;
+            const int LEN = N - j - block_width;
             SOBEL_EDGE(gx_ptr, gy_ptr, mag_ptr, prev_src_ptr, curr_src_ptr, next_src_ptr, LEN, -1);
         }
 
