@@ -154,6 +154,7 @@ static void print_results_row(std::ostream& out, int M, int N, const BenchmarkRe
 
 int main(int argc, char** argv) {
 	cv::setNumThreads(1);
+    cv::ocl::setUseOpenCL(false);
 	benchmark_performance();
 
 	int iterations = 20;

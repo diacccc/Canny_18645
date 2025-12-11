@@ -4,6 +4,8 @@
 #include <fstream>
 #include <iomanip>
 
+#include <opencv2/core/ocl.hpp>
+
 using namespace std;
 using namespace chrono;
 
@@ -93,3 +95,16 @@ static __inline__ unsigned long long rdtsc(void) {
   return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
 }
 
+void checkOpenCVConfig() {
+    std::cout << "OpenCV Build Information:\n";
+    std::cout << cv::getBuildInformation() << std::endl;
+    
+    std::cout << "\nOpenCL Status:\n";
+    std::cout << "OpenCL available: " << cv::ocl::haveOpenCL() << std::endl;
+    std::cout << "OpenCL enabled: " << cv::ocl::useOpenCL() << std::endl;
+    
+    if (cv::ocl::haveOpenCL()) {
+        cv::ocl::Device device = cv::ocl::Device::getDefault();
+        std::cout << "OpenCL device: " << device.name() << std::endl;
+    }
+}

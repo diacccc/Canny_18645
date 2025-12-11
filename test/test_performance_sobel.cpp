@@ -5,7 +5,6 @@
 #include <iostream>
 #include <random>
 #include <vector>
-#include <opencv2/core/ocl.hpp>
 
 #include "sobel.hpp"
 #include "ref.hpp"
@@ -140,7 +139,7 @@ int main(int argc, char** argv) {
     }
 
     std::vector<std::pair<int, int>> sizes = {
-        {128, 128}, {256, 256}, {512, 512}, {1024, 1024}, {2048, 2048}, {4096, 4096}
+        {128, 128}, {512, 512}, {1024, 1024}, {2048, 2048}, {4096, 4096}, {8192, 8192}
     };
 
     const std::string csv_path = "sobel_benchmark.csv";
