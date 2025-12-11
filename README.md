@@ -75,7 +75,7 @@ cmake --build . --target test_performance_nms
 
 ## Results
 
-### Sobel Performance
+### Kernel Performance
 
 ![Sobel Throughput](results/sobel_throughput.png)
 
@@ -83,3 +83,14 @@ The Sobel kernel achieves sustained throughput ranging from ~31 PPC (pixels per 
 
 ![NMS Throughput](results/nms_throughput.png)
 The peak of NMS kernel is 32. We achieve a considerable throughput around 25 when the data can perfectly fit in the L1 cache.
+
+### Overall Performance
+
+![Sobel Performance](results/sobel_speedup.png)
+Our sobel operator is slower than the OpenCV implementation. The reasons might be (1) we fuse the magnitude computation in our sobel kernel instead of computing that seperately. (2) we didn't reuse the loaded value accross rows due to the consideration of fitting in L1 cache.
+
+![NMS Performance](results/nms_speedup.png)
+The NMS is much faster than the OpenCV implementation. This is expected because (1) we move the magnitude computation into sobel. (2) we use int16 accross the whole pipeline, no any other data type conversion. (3) OpenCV doesn't vectorize the branching in NMS. (4) Our algorithm reduces the complexity of quantizing the angles. 
+
+![Overall Performance](results/overall_speedup.png)
+The overall performance is better than OpenCV.
