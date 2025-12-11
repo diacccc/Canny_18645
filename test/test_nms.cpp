@@ -15,7 +15,6 @@
 #include "nms.hpp"
 #include "utils.hpp"
 #include "ref.hpp"
-#include <opencv2/opencv.hpp>
 
 #if (defined(CV_SIMD) && CV_SIMD) || (defined(CV_SIMD_SCALABLE) && CV_SIMD_SCALABLE)
 static constexpr int kStage2MapOffset = CV_SIMD_WIDTH;
@@ -23,121 +22,11 @@ static constexpr int kStage2MapOffset = CV_SIMD_WIDTH;
 static constexpr int kStage2MapOffset = 1;
 #endif
 
-static __inline__ unsigned long long rdtsc(void) {
-  unsigned hi, lo;
-  __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
-  return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
-}
-
-
 static int failures = 0;
 static void check(bool cond, const char* msg) {
 	if(!cond) { ++failures; std::cerr << "FAIL: " << msg << std::endl; }
 }
 
-static void run_stage2_reference_map(const std::vector<int16_t>& gx,
-                                       const std::vector<int16_t>& gy,
-                                       int low_threshold,
-                                       int high_threshold,
-                                       int M,
-                                       int N,
-                                       std::vector<uint8_t>& stage2_map)
-{
-    cv::Mat dx(M, N, CV_16S, const_cast<int16_t*>(gx.data()));
-    cv::Mat dy(M, N, CV_16S, const_cast<int16_t*>(gy.data()));
-    cv::Mat map;
-    std::deque<uchar*> borderPeaksParallel;
-    cv::customizedCanny canny(dx, dy, map, borderPeaksParallel, low_threshold, high_threshold, false);
-    std::deque<uchar*> localStack;
-    std::deque<uchar*> localBorderPeaks;
-    canny.stage2(cv::Range(0, M), dx, dy, localStack, localBorderPeaks);
-
-    stage2_map.assign(M * N, 1);
-    for (int r = 0; r < M; ++r) {
-        const uchar* row_ptr = map.ptr<uchar>(r + 1) + kStage2MapOffset;
-        for (int c = 0; c < N; ++c) {
-            stage2_map[r * N + c] = row_ptr[c];
-        }
-    }
-}
-
-#define MAX_FREQ 3.2
-#define BASE_FREQ 2.1
-
-#define NMS_STEP_ONCE() \
-    NMS_TILE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr); \
-    gx_ptr += 16; \
-    gy_ptr += 16; \
-    prev_mag_ptr += 16; \
-    curr_mag_ptr += 16; \
-    next_mag_ptr += 16; \
-    res_ptr += 16; \
-    map_ptr += 16;
-
-#define REPEAT10_NMS() \
-    NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE(); \
-    NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE(); NMS_STEP_ONCE();
-
-#define REPEAT100_NMS() \
-    REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS(); \
-    REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS(); REPEAT10_NMS();
-
-#define REPEAT1000_NMS() \
-    REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); \
-    REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); REPEAT100_NMS(); 
-
-void benchmark_performance()
-{
-	const int M = 3;      // rows
-	const int N = 16;     // cols (must satisfy j+15 < N)
-	const int i = 1;      // middle row (to allow i-1 and i+1 valid)
-	const int j = 8;      // start column (ensure j-1 and j+15 within bounds)
-    const int num_runs = 100000;
-    const int NUM_INST = 200; // number of simd instructions in the kernel
-
-	std::vector<int16_t> gx(M * N * NUM_INST, 1);  // strong x gradient
-	std::vector<int16_t> gy(M * N * NUM_INST, 1);     // zero y gradient
-	std::vector<int16_t> mag(M * N * NUM_INST, 2);  // baseline magnitude
-	std::vector<int16_t> res(M * N * NUM_INST, 0);    // output
-    std::vector<int16_t> map(M * N * NUM_INST, 0);    // map outoput
-    const int16_t high_threshold = 240;
-    for (int i = 0; i < M * N * NUM_INST; ++i) {
-        gx[i] = (rand() % 512) - 256;
-        gy[i] = (rand() % 512) - 256;
-        mag[i] = abs(gx[i]) + abs(gy[i]);
-    }
-	// Macro helpers: repeat the kernel 100 times without an explicit loop.
-	// Each iteration advances all pointers by M*N elements.
-    unsigned long long st;
-    unsigned long long et;
-    unsigned long long dt; 
-    unsigned long long dt_min = (unsigned long long)-1;
-    unsigned long long sum = 0;
-    for (int run = 0; run < num_runs; ++run) {
-        int16_t *gx_ptr = gx.data() + (N * NUM_INST);
-        int16_t *gy_ptr = gy.data() + (N * NUM_INST);
-        int16_t *prev_mag_ptr = mag.data();
-        int16_t *curr_mag_ptr = mag.data() + (N * NUM_INST);
-        int16_t *next_mag_ptr = mag.data() + (2 * N * NUM_INST);
-        int16_t *res_ptr = res.data() + (N * NUM_INST);
-        int16_t *map_ptr = map.data() + (N * NUM_INST);
-        st = rdtsc();
-        asm volatile("look_here:" ::: "memory");
-        REPEAT100_NMS();
-        REPEAT100_NMS();
-        REPEAT10_NMS();
-        REPEAT10_NMS();
-        REPEAT10_NMS();
-        REPEAT10_NMS();
-        et = rdtsc();
-        dt = et - st;
-        if (dt < dt_min) dt_min = dt;
-        sum += dt;
-    }
-
-    printf("Throughput : %lf \n\r", 16 * ((double)NUM_INST * 24) / (dt_min * MAX_FREQ/BASE_FREQ));
-
-}
 
 // Debug helper: Print a region of data
 void print_region(const char* label, const int16_t* data, int M, int N, int row, int col, int radius = 2) {
@@ -200,7 +89,7 @@ int16_t debug_nms_pixel(const int16_t* gx, const int16_t* gy, const int16_t* mag
         // 0° direction - check left and right
         if (verbose) std::cout << "  Comparing with left=" << mag[i*N + j-1] 
                                << ", right=" << mag[i*N + j+1] << std::endl;
-        if (mag_val > mag[i*N + j-1] && mag_val >= mag[i*N + j+1]) {
+        if (mag_val > mag[i*N + j-1] && mag_val > mag[i*N + j+1]) {
             if (verbose) std::cout << "  -> LOCAL MAX" << std::endl;
             return mag_val;
         }
@@ -210,7 +99,7 @@ int16_t debug_nms_pixel(const int16_t* gx, const int16_t* gy, const int16_t* mag
             // 90° direction - check up and down
             if (verbose) std::cout << "  Comparing with up=" << mag[(i-1)*N + j] 
                                    << ", down=" << mag[(i+1)*N + j] << std::endl;
-            if (mag_val > mag[(i-1)*N + j] && mag_val >= mag[(i+1)*N + j]) {
+            if (mag_val > mag[(i-1)*N + j] && mag_val > mag[(i+1)*N + j]) {
                 if (verbose) std::cout << "  -> LOCAL MAX" << std::endl;
                 return mag_val;
             }
@@ -253,7 +142,7 @@ static void nms_edge_reference_block(const int16_t* gx, const int16_t* gy,
 
         if (y < tg22x) {
             bool left_pass = (pos == 1 && ii == 0) ? true : (mag_val > curr_mag[ii - 1]);
-            bool right_pass = (pos == -1 && ii == len - 1) ? true : (mag_val >= curr_mag[ii + 1]);
+            bool right_pass = (pos == -1 && ii == len - 1) ? true : (mag_val > curr_mag[ii + 1]);
             if (left_pass && right_pass) {
                 dst[ii] = mag_val;
             }
@@ -393,32 +282,32 @@ void non_max_suppression_unit_test() {
             }
         }
     }
-    std::cout << "\nMagnitude after NMS:" << std::endl;
-    for (int i = 1; i < M - 1; ++i) {
-        for (int j = 1; j < N - 1; ++j) {
-            std::cout << std::setw(5) << mag[i * N + j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << "\nMagnitude after NMS:" << std::endl;
+    // for (int i = 1; i < M - 1; ++i) {
+    //     for (int j = 1; j < N - 1; ++j) {
+    //         std::cout << std::setw(5) << mag[i * N + j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    std::cout << "\nNMS Result:" << std::endl;
-    for (int i = 1; i < M - 1; ++i) {
-        for (int j = 1; j < N - 1; ++j) {
-            std::cout << std::setw(5) << res[i * N + j] << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << "\nNMS Result:" << std::endl;
+    // for (int i = 1; i < M - 1; ++i) {
+    //     for (int j = 1; j < N - 1; ++j) {
+    //         std::cout << std::setw(5) << res[i * N + j] << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    std::cout << "\n Ref Result:" << std::endl;
-    for (int i = 1; i < M - 1; ++i)
-    {
-        for (int j = 1; j < N - 1; ++j)
-        {
-            int16_t expected = debug_nms_pixel(gx.data(), gy.data(), mag_backup.data(), M, N, i, j, false);
-            std::cout << std::setw(5) << expected << " ";
-        }
-        std::cout << std::endl;
-    }
+    // std::cout << "\n Ref Result:" << std::endl;
+    // for (int i = 1; i < M - 1; ++i)
+    // {
+    //     for (int j = 1; j < N - 1; ++j)
+    //     {
+    //         int16_t expected = debug_nms_pixel(gx.data(), gy.data(), mag_backup.data(), M, N, i, j, false);
+    //         std::cout << std::setw(5) << expected << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
 
     for (size_t idx = 0; idx < mag.size(); ++idx) {
         if (mag[idx] != mag_backup[idx]) {
@@ -527,116 +416,13 @@ void nms_edge_unit_test() {
     check(mismatches == 0, "NMS_EDGE matches scalar reference");
 }
 
-// void compare_stage2_mismatch_rate() {
-//     std::cout << "\n=== Stage2 mismatch comparison ===" << std::endl;
-
-//     const int M = 256;
-//     const int N = 256;
-//     const int low_threshold = 50;
-//     const int high_threshold = 150;
-
-//     std::vector<int16_t> gx(M * N);
-//     std::vector<int16_t> gy(M * N);
-//     std::vector<int16_t> mag(M * N);
-//     std::mt19937 rng(98765);
-//     std::uniform_int_distribution<int> dist(-128, 128);
-//     for (int idx = 0; idx < M * N; ++idx) {
-//         gx[idx] = static_cast<int16_t>(dist(rng));
-//         gy[idx] = static_cast<int16_t>(dist(rng));
-//         mag[idx] = static_cast<int16_t>(std::abs(gx[idx]) + std::abs(gy[idx]));
-//     }
-
-//     std::vector<int16_t> res(M * N, 0);
-//     std::vector<int16_t> map(M * N, 0);
-//     non_max_suppression(gx.data(), gy.data(), mag.data(), high_threshold, res.data(), map.data(), M, N);
-
-//     std::vector<uint8_t> stage2_map;
-//     run_stage2_reference_map(gx, gy, low_threshold, high_threshold, M, N, stage2_map);
-
-//     int interior_pixels = 0;
-//     int mismatches = 0;
-//     int ours_strong = 0;
-//     int stage2_strong = 0;
-//     int reported = 0;
-//     constexpr int kMaxReports = 10;
-//     int stage2_mismatches = 0;
-//     int stage2_reported = 0;
-//     constexpr int kMaxStage2Reports = 5;
-//     for (int i = 1; i < M - 1; ++i) {
-//         for (int j = 1; j < N - 1; ++j) {
-//             const int idx = i * N + j;
-//             bool ours = map[idx] == -1;
-//             bool theirs = stage2_map[idx] == 2;
-//             int16_t ref_val = debug_nms_pixel(gx.data(), gy.data(), mag.data(), M, N, i, j, false);
-//             bool ref_local_max = ref_val > 0;
-//             bool stage2_local_max = stage2_map[idx] != 1; // 0 or 2 means local max in stage2
-//             ours_strong += ours ? 1 : 0;
-//             stage2_strong += theirs ? 1 : 0;
-//             if (ours != theirs) {
-//                 ++mismatches;
-//                 if (reported < kMaxReports) {
-//                     std::cout << "    mismatch #" << (reported + 1)
-//                               << " at (" << i << "," << j << ")"
-//                               << " ours_map=" << map[idx]
-//                               << " ours_res=" << res[idx]
-//                               << " stage2_map=" << static_cast<int>(stage2_map[idx])
-//                               << " gx=" << gx[idx]
-//                               << " gy=" << gy[idx]
-//                               << " mag=" << mag[idx]
-//                               << " ref_local=" << ref_val
-//                               << std::endl;
-//                     debug_nms_pixel(gx.data(), gy.data(), mag.data(), M, N, i, j, true);
-//                     ++reported;
-//                 }
-//             }
-//             if (stage2_local_max != ref_local_max) {
-//                 ++stage2_mismatches;
-//                 if (stage2_reported < kMaxStage2Reports) {
-//                     std::cout << "    stage2 mismatch #" << (stage2_reported + 1)
-//                               << " at (" << i << "," << j << ")"
-//                               << " stage2_map=" << static_cast<int>(stage2_map[idx])
-//                               << " ref_local=" << ref_val
-//                               << " gx=" << gx[idx]
-//                               << " gy=" << gy[idx]
-//                               << " mag=" << mag[idx]
-//                               << std::endl;
-//                     debug_nms_pixel(gx.data(), gy.data(), mag.data(), M, N, i, j, true);
-//                     ++stage2_reported;
-//                 }
-//             }
-//             ++interior_pixels;
-//         }
-//     }
-
-//     double mismatch_rate = interior_pixels ? (100.0 * mismatches / interior_pixels) : 0.0;
-//     std::cout << "  interior pixels: " << interior_pixels << std::endl;
-//     std::cout << "  our strong edges: " << ours_strong << std::endl;
-//     std::cout << "  stage2 strong edges: " << stage2_strong << std::endl;
-//     if (mismatches > kMaxReports) {
-//         std::cout << "  (" << (mismatches - kMaxReports) << " additional mismatches not shown)" << std::endl;
-//     }
-//     std::cout << "  mismatches: " << mismatches
-//               << " (" << mismatch_rate << "%)" << std::endl;
-//     if (stage2_mismatches > 0) {
-//         double stage2_rate = 100.0 * stage2_mismatches / interior_pixels;
-//         if (stage2_mismatches > kMaxStage2Reports) {
-//             std::cout << "  (" << (stage2_mismatches - kMaxStage2Reports)
-//                       << " additional stage2 mismatches not shown)" << std::endl;
-//         }
-//         std::cout << "  stage2 vs debug mismatches: " << stage2_mismatches
-//                   << " (" << stage2_rate << "%)" << std::endl;
-//     } else {
-//         std::cout << "  stage2 vs debug mismatches: 0" << std::endl;
-//     }
-// }
 
 
 int main()
 {
-    
-    // compare_stage2_mismatch_rate();
-    // non_max_suppression_unit_test();
-    benchmark_performance();
+    nms_edge_unit_test();
+    nms_tile_unit_test();
+    non_max_suppression_unit_test();
     return failures;
 }
 

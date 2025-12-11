@@ -17,7 +17,7 @@ do { \
         int tg22x = x * TG22; \
         if (y < tg22x) \
         { \
-            if (((POS == 1 && ii == 0) || (mag_val > *(curr_mag + ii - 1))) && ((POS == -1 && ii == LEN - 1) || (mag_val >= *(curr_mag + ii + 1)))) \
+            if (((POS == 1 && ii == 0) || (mag_val > *(curr_mag + ii - 1))) && ((POS == -1 && ii == LEN - 1) || (mag_val > *(curr_mag + ii + 1)))) \
             { \
                 *(res + ii) = mag_val; \
             } \
@@ -26,7 +26,7 @@ do { \
             int tg67x = tg22x + (x << 16); \
             if (y > tg67x) \
             { \
-                if (mag_val > *(prev_mag + ii) && mag_val >= *(next_mag + ii)) \
+                if (mag_val > *(prev_mag + ii) && mag_val > *(next_mag + ii)) \
                 { \
                     *(res + ii) = mag_val; \
                 } \
@@ -176,9 +176,9 @@ void non_max_suppression(const int16_t* gx, const int16_t* gy,
             res_ptr += 16;
             map_ptr += 16;
         }
-        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+        if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
             // Process the last column separately to handle right border
-            const int LEN = N - j - 1 - block_width;
+            const int LEN = N - j - block_width;
             NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
         }
 
@@ -220,9 +220,9 @@ void non_max_suppression(const int16_t* gx, const int16_t* gy,
                 res_ptr += 16;
                 map_ptr += 16;
             }
-            if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+            if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
                 // Process the last column separately to handle right border
-                const int LEN = N - j - 1 - block_width;
+                const int LEN = N - j - block_width;
                 NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
             }
         }
@@ -261,9 +261,9 @@ void non_max_suppression(const int16_t* gx, const int16_t* gy,
             res_ptr += 16;
             map_ptr += 16;
         }
-        if (block_width != BLOCK_WIDTH &&  N - j - 1 - block_width > 0) {
+        if (block_width != BLOCK_WIDTH &&  N - j - block_width > 0) {
             // Process the last column separately to handle right border
-            const int LEN = N - j - 1 - block_width;
+            const int LEN = N - j - block_width;
             NMS_EDGE(gx_ptr, gy_ptr, prev_mag_ptr, curr_mag_ptr, next_mag_ptr, res_ptr, high_threshold, map_ptr, LEN, -1);
         }
 
