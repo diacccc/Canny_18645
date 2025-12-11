@@ -1,4 +1,4 @@
-build opencv 
+## OpenCV Requirement
 
 ```
 # 1) Get sources
@@ -33,14 +33,14 @@ cmake -S .. -B . \
 # 3) Build & install
 cmake --build . -j$(nproc)
 sudo cmake --install .
-
-
 ```
 
 
+
+## Build and Run
 ```
 cmake ..
-cmake --build . --config Release
-cmake --build build --target test_nms
+cmake --build . --config Release # build the whole project
+cmake --build build --target test_nms # only build the nms binary
 ctest -R test_sobel --output-on-failure
 ```
