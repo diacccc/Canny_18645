@@ -1,6 +1,5 @@
 #ifndef NMS_HPP
 #define NMS_HPP
-
 #include <cstdint>
 #include <immintrin.h>
 
@@ -140,7 +139,6 @@ void non_max_suppression(const int16_t* gx, const int16_t* gy,
     const int BLOCK_WIDTH = 2032; // 2032 pixels per block to fit in L1 cache
     std::vector<int16_t> zero_buf(16, 0);
     for (int j = 1; j < N; j += BLOCK_WIDTH) {
-        printf("Processing block starting at column %d\n", j);
         int block_width = std::min(BLOCK_WIDTH, N - j - 1);
         block_width = block_width & (~15); // make it multiple of 16
         // Initialize pointers for the first two rows
@@ -229,10 +227,10 @@ void non_max_suppression(const int16_t* gx, const int16_t* gy,
             }
         }
 
-        gx_ptr = gx + (0 * N);
-        gy_ptr = gy + (0 * N);
-        res_ptr = res + (0 * N);
-        map_ptr = map + (0 * N);
+        gx_ptr = gx + ((M - 1) * N);
+        gy_ptr = gy + ((M - 1) * N);
+        res_ptr = res + ((M - 1) * N);
+        map_ptr = map + ((M - 1) * N);
         prev_mag_ptr = mag + ((M - 2) * N); // zero for the last row
         curr_mag_ptr = mag + ((M - 1) * N);
         next_mag_ptr = zero_buf.data();

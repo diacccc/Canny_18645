@@ -41,5 +41,6 @@ sudo cmake --install .
 ```
 cmake ..
 cmake --build . --config Release
+cmake --build build --target test_nms
 ctest -R test_sobel --output-on-failure
 ```
