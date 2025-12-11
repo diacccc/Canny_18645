@@ -1,3 +1,9 @@
+## Machine
+
+```
+hostname: ece019.ece.local.cmu.ed
+```
+
 ## OpenCV Requirement
 
 ```
@@ -38,9 +44,42 @@ sudo cmake --install .
 
 
 ## Build and Run
+
+### Build
 ```
+mkdir build
+cd build
 cmake ..
 cmake --build . --config Release # build the whole project
-cmake --build build --target test_nms # only build the nms binary
-ctest -R test_sobel --output-on-failure
 ```
+
+### Correctness Testing
+This will test the correctness for a random image. 
+```
+cmake --build . --target test_sobel 
+./test_sobel
+
+cmake --build . --target test_nms
+./test_nms
+```
+
+### Performance Testing 
+This will output the throughput of designed kernel and the speedup over OpenCV. 
+```
+cmake --build . --target test_performance_sobel 
+./test_performance_sobel
+
+cmake --build . --target test_performance_nms
+./test_performance_nms
+```
+
+## Results
+
+### Sobel Performance
+
+![Sobel Throughput](results/sobel_throughput.png)
+
+The Sobel kernel achieves sustained throughput ranging from ~31 PPC (pixels per cycle) at small image sizes down to ~19 PPC at larger sizes. After the number of output exceeds the one way size of L1 cache, the throughput shows notable decreasement.
+
+![NMS Throughput](results/nms_throughput.png)
+The peak of NMS kernel is 32. We achieve a considerable throughput around 25 when the data can perfectly fit in the L1 cache.
