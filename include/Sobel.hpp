@@ -21,17 +21,17 @@ do { \
         const int has_left  = !(POS == 1 && ii == 0); \
         const int has_right = !(POS == -1 && ii == LEN - 1); \
 \
-        uint16_t p_ul = has_left  ? *(prev_row + ii - 1) : *(prev_row + ii); \
-        uint16_t p_u  = *(prev_row + ii); \
-        uint16_t p_ur = has_right ? *(prev_row + ii + 1) : *(prev_row + ii); \
+        int16_t p_ul = has_left  ? *(prev_row + ii - 1) : *(prev_row + ii); \
+        int16_t p_u  = *(prev_row + ii); \
+        int16_t p_ur = has_right ? *(prev_row + ii + 1) : *(prev_row + ii); \
 \
-        uint16_t p_ml = has_left  ? *(curr_row + ii - 1) : *(curr_row + ii); \
-        uint16_t p_m  = *(curr_row + ii); \
-        uint16_t p_mr = has_right ? *(curr_row + ii + 1) : *(curr_row + ii); \
+        int16_t p_ml = has_left  ? *(curr_row + ii - 1) : *(curr_row + ii); \
+        int16_t p_m  = *(curr_row + ii); \
+        int16_t p_mr = has_right ? *(curr_row + ii + 1) : *(curr_row + ii); \
 \
-        uint16_t p_ll = has_left  ? *(next_row + ii - 1) : *(next_row + ii); \
-        uint16_t p_l  = *(next_row + ii); \
-        uint16_t p_lr = has_right ? *(next_row + ii + 1) : *(next_row + ii); \
+        int16_t p_ll = has_left  ? *(next_row + ii - 1) : *(next_row + ii); \
+        int16_t p_l  = *(next_row + ii); \
+        int16_t p_lr = has_right ? *(next_row + ii + 1) : *(next_row + ii); \
 \
         /* Sobel Gx */ \
         int gx_val = -p_ul + p_ur \
@@ -44,8 +44,8 @@ do { \
              p_ll + 2*p_l + p_lr; \
         *(gy_ptr + ii) = (int16_t)gy_val; \
 \
-        int16_t mag_val = (int16_t)std::abs(gx_val) + (int16_t)std::abs(gy_val); \
-        *(mag_ptr + ii) = mag_val; \
+        int mag_val = (int)std::abs(gx_val) + (int)std::abs(gy_val); \
+        *(mag_ptr + ii) = (int16_t) mag_val; \
 } \
 } while(0)
 
