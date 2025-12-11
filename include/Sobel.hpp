@@ -21,17 +21,17 @@ do { \
         const int has_left  = !(POS == 1 && ii == 0); \
         const int has_right = !(POS == -1 && ii == LEN - 1); \
 \
-        uint16_t p_ul = has_left  ? *(prev_row + ii - 1) : 0; \
+        uint16_t p_ul = has_left  ? *(prev_row + ii - 1) : *(prev_row + ii); \
         uint16_t p_u  = *(prev_row + ii); \
-        uint16_t p_ur = has_right ? *(prev_row + ii + 1) : 0; \
+        uint16_t p_ur = has_right ? *(prev_row + ii + 1) : *(prev_row + ii); \
 \
-        uint16_t p_ml = has_left  ? *(cur_row + ii - 1) : 0; \
+        uint16_t p_ml = has_left  ? *(curr_row + ii - 1) : *(curr_row + ii); \
         uint16_t p_m  = *(cur_row + ii); \
-        uint16_t p_mr = has_right ? *(cur_row + ii + 1) : 0; \
+        uint16_t p_mr = has_right ? *(curr_row + ii + 1) : *(curr_row + ii); \
 \
-        uint16_t p_ll = has_left  ? *(next_row + ii - 1) : 0; \
+        uint16_t p_ll = has_left  ? *(next_row + ii - 1) : *(next_row + ii); \
         uint16_t p_l  = *(next_row + ii); \
-        uint16_t p_lr = has_right ? *(next_row + ii + 1) : 0; \
+        uint16_t p_lr = has_right ? *(next_row + ii + 1) : *(next_row + ii); \
 \
         /* Sobel Gx */ \
         gx = -p_ul + p_ur \
@@ -48,19 +48,19 @@ do { \
 } while(0)
 
 // void SOBEL_TILE(int16_t* gx1, int16_t* gx2, int16_t* gx3, int16_t* gx4, int16_t* gy1, int16_t* gy2, int16_t* gy3, int16_t* gy4, uint16_t* src0, uint16_t* src1, uint16_t* src2, uint16_t* src3, uint16_t* src4, uint16_t* src5)
-#define SOBEL_TILE(gx1, gx2, gx3, gx4, gy1, gy2, gy3, gy4, mag1, mag2, mag3, mag4, src0, src1, src2) \
+#define SOBEL_TILE(gx, gy, mag, src0, src1, src2) \
 do { \
 	__m256i v_gx1, v_gx2, v_gx3, v_gx4; \
 	__m256i v_gy1, v_gy2, v_gy3, v_gy4; \
 	__m256i v_src0, v_src1, v_src2, v_src3, v_src4, v_src5, v_src6, v_src7; \
-	v_src0 = _mm256_loadu_si256(v_src0, (__m256i*)((src0))); \
-	v_src1 = _mm256_loadu_si256(v_src1, (__m256i*)((src0) + 16)); \
-	v_src2 = _mm256_loadu_si256(v_src2, (__m256i*)((src0) + 32)); \
-	v_src3 = _mm256_loadu_si256(v_src3, (__m256i*)((src0) + 48)); \
-	v_src4 = _mm256_loadu_si256(v_src4, (__m256i*)((src0) + 2)); \
-	v_src5 = _mm256_loadu_si256(v_src5, (__m256i*)((src0) + 18)); \
-	v_src6 = _mm256_loadu_si256(v_src6, (__m256i*)((src0) + 34)); \
-	v_src7 = _mm256_loadu_si256(v_src7, (__m256i*)((src0) + 50)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src0))); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 16)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 32)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 48)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src0) + 2)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src0) + 18)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src0) + 34)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src0) + 50)); \
 	v_gx1 = _mm256_sub_epi16(v_src4, v_src0); \
 	v_gx2 = _mm256_sub_epi16(v_src5, v_src1); \
 	v_gx3 = _mm256_sub_epi16(v_src6, v_src2); \
@@ -69,14 +69,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_src1, v_src5); \
 	v_gy3 = _mm256_add_epi16(v_src2, v_src6); \
 	v_gy4 = _mm256_add_epi16(v_src3, v_src7); \
-	v_src0 = _mm256_loadu_si256(v_src0, (__m256i*)((src0 + 1))); \
-	v_src1 = _mm256_loadu_si256(v_src1, (__m256i*)((src0) + 17)); \
-	v_src2 = _mm256_loadu_si256(v_src2, (__m256i*)((src0) + 33)); \
-	v_src3 = _mm256_loadu_si256(v_src3, (__m256i*)((src0) + 49)); \
-	v_src4 = _mm256_loadu_si256(v_src4, (__m256i*)((src1))); \
-	v_src5 = _mm256_loadu_si256(v_src5, (__m256i*)((src1) + 16)); \
-	v_src6 = _mm256_loadu_si256(v_src6, (__m256i*)((src1) + 32)); \
-	v_src7 = _mm256_loadu_si256(v_src7, (__m256i*)((src1) + 48)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src0 + 1))); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src0) + 17)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src0) + 33)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src0) + 49)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src1))); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src1) + 16)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src1) + 32)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src1) + 48)); \
 	v_gx1 = _mm256_sub_epi16(v_gx1, v_src4); \
 	v_gx2 = _mm256_sub_epi16(v_gx2, v_src5); \
 	v_gx3 = _mm256_sub_epi16(v_gx3, v_src6); \
@@ -93,14 +93,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_gy2, v_src1); \
 	v_gy3 = _mm256_add_epi16(v_gy3, v_src2); \
 	v_gy4 = _mm256_add_epi16(v_gy4, v_src3); \
-	v_src0 = _mm256_loadu_si256(v_src0, (__m256i*)((src1) + 2)); \
-	v_src1 = _mm256_loadu_si256(v_src1, (__m256i*)((src1) + 18)); \
-	v_src2 = _mm256_loadu_si256(v_src2, (__m256i*)((src1) + 34)); \
-	v_src3 = _mm256_loadu_si256(v_src3, (__m256i*)((src1) + 50)); \
-	v_src4 = _mm256_loadu_si256(v_src4, (__m256i*)((src2) + 1)); \
-	v_src5 = _mm256_loadu_si256(v_src5, (__m256i*)((src2) + 17)); \
-	v_src6 = _mm256_loadu_si256(v_src6, (__m256i*)((src2) + 33)); \
-	v_src7 = _mm256_loadu_si256(v_src7, (__m256i*)((src2) + 49)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src1) + 2)); \
+	v_src1 = _mm256_loadu_si256((__m256i*)((src1) + 18)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src1) + 34)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src1) + 50)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src2) + 1)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 17)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 33)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 49)); \
 	v_gx1 = _mm256_add_epi16(v_gx1, v_src0); \
 	v_gx2 = _mm256_add_epi16(v_gx2, v_src1); \
 	v_gx3 = _mm256_add_epi16(v_gx3, v_src2); \
@@ -117,14 +117,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_gy2, v_src5); \
 	v_gy3 = _mm256_add_epi16(v_gy3, v_src6); \
 	v_gy4 = _mm256_add_epi16(v_gy4, v_src7); \
-	v_src0 = _mm256_loadu_si256(v_src0, (__m256i*)((src2)));\
-	v_src1 = _mm256_loadu_si256(v_src1, (__m256i*)((src2) + 16)); \
-	v_src2 = _mm256_loadu_si256(v_src2, (__m256i*)((src2) + 32)); \
-	v_src3 = _mm256_loadu_si256(v_src3, (__m256i*)((src2) + 48)); \
-	v_src4 = _mm256_loadu_si256(v_src4, (__m256i*)((src2) + 2)); \
-	v_src5 = _mm256_loadu_si256(v_src5, (__m256i*)((src2) + 18)); \
-	v_src6 = _mm256_loadu_si256(v_src6, (__m256i*)((src2) + 34)); \
-	v_src7 = _mm256_loadu_si256(v_src7, (__m256i*)((src2) + 50)); \
+	v_src0 = _mm256_loadu_si256((__m256i*)((src2)));\
+	v_src1 = _mm256_loadu_si256((__m256i*)((src2) + 16)); \
+	v_src2 = _mm256_loadu_si256((__m256i*)((src2) + 32)); \
+	v_src3 = _mm256_loadu_si256((__m256i*)((src2) + 48)); \
+	v_src4 = _mm256_loadu_si256((__m256i*)((src2) + 2)); \
+	v_src5 = _mm256_loadu_si256((__m256i*)((src2) + 18)); \
+	v_src6 = _mm256_loadu_si256((__m256i*)((src2) + 34)); \
+	v_src7 = _mm256_loadu_si256((__m256i*)((src2) + 50)); \
 	v_gx1 = _mm256_sub_epi16(v_gx1, v_src0); \
 	v_gx2 = _mm256_sub_epi16(v_gx2, v_src1); \
 	v_gx3 = _mm256_sub_epi16(v_gx3, v_src2); \
@@ -141,14 +141,14 @@ do { \
 	v_gy2 = _mm256_add_epi16(v_gy2, v_src5); \
 	v_gy3 = _mm256_add_epi16(v_gy3, v_src6); \
 	v_gy4 = _mm256_add_epi16(v_gy4, v_src7); \
-	_mm256_storeu_si256((__m256i*)((gx1)), v_gx1); \
-	_mm256_storeu_si256((__m256i*)((gx2)), v_gx2); \
-	_mm256_storeu_si256((__m256i*)((gx3)), v_gx3); \
-	_mm256_storeu_si256((__m256i*)((gx4)), v_gx4); \
-	_mm256_storeu_si256((__m256i*)((gy1)), v_gy1); \
-	_mm256_storeu_si256((__m256i*)((gy2)), v_gy2); \
-	_mm256_storeu_si256((__m256i*)((gy3)), v_gy3); \
-	_mm256_storeu_si256((__m256i*)((gy4)), v_gy4); \
+	_mm256_storeu_si256((__m256i*)((gx)), v_gx1); \
+	_mm256_storeu_si256((__m256i*)((gx) + 16), v_gx2); \
+	_mm256_storeu_si256((__m256i*)((gx) + 32), v_gx3); \
+	_mm256_storeu_si256((__m256i*)((gx) + 48), v_gx4); \
+	_mm256_storeu_si256((__m256i*)((gy)), v_gy1); \
+	_mm256_storeu_si256((__m256i*)((gy) + 16), v_gy2); \
+	_mm256_storeu_si256((__m256i*)((gy) + 32), v_gy3); \
+	_mm256_storeu_si256((__m256i*)((gy) + 48), v_gy4); \
 	/* Magnitude Calculation */ \
 	v_src0 = _mm256_abs_epi16(v_gx1); \
 	v_src1 = _mm256_abs_epi16(v_gy1); \
@@ -162,10 +162,10 @@ do { \
 	v_src2 = _mm256_add_epi16(v_src2, v_src3); \
 	v_src4 = _mm256_add_epi16(v_src4, v_src5); \
 	v_src6 = _mm256_add_epi16(v_src6, v_src7); \
-	_mm256_storeu_si256((__m256i*)((mag1)), v_src0); \
-	_mm256_storeu_si256((__m256i*)((mag2)), v_src2); \
-	_mm256_storeu_si256((__m256i*)((mag3)), v_src4); \
-	_mm256_storeu_si256((__m256i*)((mag4)), v_src6); \
+	_mm256_storeu_si256((__m256i*)((mag)), v_src0); \
+	_mm256_storeu_si256((__m256i*)((mag) + 16), v_src2); \
+	_mm256_storeu_si256((__m256i*)((mag) + 32), v_src4); \
+	_mm256_storeu_si256((__m256i*)((mag) + 48), v_src6); \
 } while (0)
 
 #endif

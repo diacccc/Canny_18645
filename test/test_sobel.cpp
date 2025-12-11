@@ -5,10 +5,10 @@
 #define MAX_FREQ 3.2
 #define BASE_FREQ 2.1
 
-#define MM 128
-#define NN 128
+#define MM 514
+#define NN 514
 
-#define NUM_ITER 1e6
+#define NUM_ITER 5e4
 
 //timing routine for reading the time stamp counter
 static __inline__ unsigned long long rdtsc(void) {
@@ -31,19 +31,14 @@ int main() {
     uint64_t r0, r1;
     uint64_t sum = 0;
     for (int i = 0; i < NUM_ITER; i++) {
-        for (int col = 0; col < NN - 17; col += 16) {
-            for (int row = 0; row < MM - 5; row += 4) {
+        for (int col = 0; col < NN - 63; col += 64) {
+            for (int row = 0; row < MM - 2; row += 1) {
                 r0 = rdtsc();
                 uint16_t* Img = Src.data() + NN * row + col;
                 int16_t* gx = Gx.data() + NN * row + col;
                 int16_t* gy = Gy.data() + NN * row + col;
-                int16_t* mag = Mag.data() + NN * row + col;
-                SOBEL_TILE(
-                    gx + NN, gx + NN * 2, gx + NN * 3, gx + NN * 4,
-                    gy + NN, gy + NN * 2, gy + NN * 3, gy + NN * 4,
-                    mag + NN, mag + NN * 2, mag + NN * 3, mag + NN * 4,
-                    Img, Img + NN, Img + NN * 2, Img + NN * 3, Img + NN * 4, Img + NN * 5
-                );
+                uint16_t* mag = Mag.data() + NN * row + col;
+                SOBEL_TILE(gx, gy, mag, Img, Img + NN, Img + NN * 2);
                 r1 = rdtsc();
                 sum += (r1 - r0);
             }
